@@ -395,13 +395,13 @@ public class EditorStatus extends BasicSplitPaneDivider {
 
     } else if (!message.isEmpty()) {
       g.setFont(glyphFont);
-      drawButton(g, CLIPBOARD_GLYPH, 1, rolloverState == ROLLOVER_CLIPBOARD);
+      drawButton(g, "Hello", 1, rolloverState == ROLLOVER_CLIPBOARD);
       g.setFont(font);
     }
 
     // draw collapse/expand button
     String collapseGlyph = collapsed ? EXPAND_GLYPH : COLLAPSE_GLYPH;
-    drawButton(g, collapseGlyph, 0, rolloverState == ROLLOVER_COLLAPSE);
+    drawButton(g, "TEST", 0, rolloverState == ROLLOVER_COLLAPSE);
 
     screen.drawImage(offscreen, 0, 0, sizeW, sizeH, null);
   }
