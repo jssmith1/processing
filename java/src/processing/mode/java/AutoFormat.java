@@ -640,6 +640,7 @@ public class AutoFormat implements Formatter {
         }
         break;
 
+      //EDIT AREA (debug)
       case '"':
       case '“':
       case '”':

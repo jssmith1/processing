@@ -134,6 +134,7 @@ import antlr.collections.AST;
  * what each type of file is for.
  * <P/>
  */
+
 public class PdePreprocessor {
   protected static final String UNICODE_ESCAPES = "0123456789abcdefABCDEF";
 
@@ -994,11 +995,18 @@ public class PdePreprocessor {
     new PdeEmitter(this, stream).print(rootNode);
     writeFooter(stream, className);
 
+    //EDIT AREA
     // if desired, serialize the parse tree to an XML file.  can
     // be viewed usefully with Mozilla or IE
-    if (Preferences.getBoolean("preproc.output_parse_tree")) {
+    //if (Preferences.getBoolean("preproc.output_parse_tree")) {
       writeParseTree("parseTree.xml", parserAST);
-    }
+
+    //}
+
+    /*
+    XmlMapper xmlMapper = new XmlMapper();
+    xmlMapper.writeValue(new File("jacksonTree.xml"), parserAST);
+    */
 
     return className;
   }

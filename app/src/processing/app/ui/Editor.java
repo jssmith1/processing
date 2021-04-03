@@ -3064,7 +3064,7 @@ public abstract class Editor extends JFrame implements RunnerListener {
     updateEditorStatus();
   }
 
-
+  //EDIT AREA (maybe)
   /**
    * Updates the error table in the Error Window.
    */
@@ -3081,7 +3081,6 @@ public abstract class Editor extends JFrame implements RunnerListener {
       }
     }
   }
-
 
   public void highlight(Problem p) {
     if (p != null) {

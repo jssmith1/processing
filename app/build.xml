@@ -1,5 +1,13 @@
 <?xml version="1.0"?>
-<project name="Processing PDE" default="build">
+<project name="Processing PDE" default="build" xmlns:ivy="antlib:org.apache.ivy.ant">
+
+<available classname="org.apache.ivy.Main" property="ivy.installed"/>
+
+<target name="install-ivy" description="Install ivy" unless="ivy.installed">
+    <mkdir dir="${user.home}/.ant/lib"/>
+    <get dest="${user.home}/.ant/lib/ivy.jar" src="http://search.maven.org/remotecontent?filepath=org/apache/ivy/ivy/2.5.0/ivy-2.5.0.jar"/>
+    <fail message="Ivy has been installed. Run the build again"/>
+</target>
 
   <target name="clean" description="Clean the build directories">
     <delete dir="bin" />
@@ -13,14 +21,14 @@
     <fail unless="core-built" message="Please build the core library first and make sure it is located at ../core/library/core.jar" />
 
     <mkdir dir="bin" />
-    
+
     <!-- copy languages files -->
     <copy todir="bin">
       <fileset dir="src">
         <include name="processing/app/languages/*.properties" />
       </fileset>
     </copy>
-    
+
     <!-- in some cases, pde.jar was not getting built
 	 https://github.com/processing/processing/issues/1792 -->
     <delete file="pde.jar" />
@@ -30,26 +38,45 @@
 
     <javac source="1.8"
 	   target="1.8"
-	   destdir="bin" 
-	   excludes="**/tools/format/**" 
-	   encoding="UTF-8" 
-	   includeAntRuntime="false" 
-	   classpath="../core/library/core.jar; 
-                      ../core/apple.jar; 
-                      lib/ant.jar; 
-                      lib/ant-launcher.jar; 
+	   destdir="bin"
+	   excludes="**/tools/format/**"
+	   encoding="UTF-8"
+	   includeAntRuntime="false"
+	   classpath="../core/library/core.jar;
+                      ../core/apple.jar;
+                      lib/ant.jar;
+                      lib/ant-launcher.jar;
                       lib/jna.jar;
-                      lib/jna-platform.jar"
+                      lib/jna-platform.jar;
+                      lib/javaparser-core-3.20.2.jar;
+                      lib/javaparser-symbol-solver-core-3.20.2"
 	   debug="on"
 	   nowarn="true"
 	   compiler="org.eclipse.jdt.core.JDTCompilerAdapter">
       <src path="src" />
-      <compilerclasspath path="../java/mode/org.eclipse.jdt.core.jar; 
-                               ../java/mode/jdtCompilerAdapter.jar" />
+      <compilerclasspath path="../java/mode/org.eclipse.jdt.core.jar;
+                               ../java/mode/jdtCompilerAdapter.jar;
+                               .." />
     </javac>
   </target>
 
-  <target name="build" depends="compile" description="Build PDE">
+  <target name="build" depends="compile, parser" description="Build PDE">
     <jar basedir="bin" destfile="pde.jar" />
   </target>
+
+    <target name="parser" depends="install-ivy" description="Use ivy to resolve classpaths">
+
+        <ivy:retrieve>
+        <dependency org="com.github.javaparser" name="javaparser-symbol-solver-core" rev="3.20.2" conf="default">
+        </dependency>
+        </ivy:retrieve>
+
+    </target>
+
+    <target name="jackson" depends="install-ivy" description="Use ivy to resolve classpaths">
+         <ivy:cachepath pathid="compile.path">
+            <dependency org="com.fasterxml.jackson.dataformat" name="jackson-dataformat-xml" rev="2.11.1" conf="default">
+            </dependency>
+        </ivy:cachepath>
+    </target>
 </project>
