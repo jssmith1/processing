@@ -115,6 +115,7 @@ public abstract class Editor extends JFrame implements RunnerListener {
   protected EditorFooter footer;
   protected EditorConsole console;
   protected ErrorTable errorTable;
+  protected EditorHints editorHints;
 
   // currently opened program
   protected Sketch sketch;
@@ -445,7 +446,7 @@ public abstract class Editor extends JFrame implements RunnerListener {
 
   public void addEditorHints(EditorFooter footer) {
     JScrollPane scrollPane = new JScrollPane();
-    EditorHints editorHints = new EditorHints();
+    editorHints = new EditorHints();
     scrollPane.setBorder(BorderFactory.createEmptyBorder());
     scrollPane.setViewportView(editorHints);
     footer.addPanel(scrollPane, "Hints", "/lib/footer/error");
