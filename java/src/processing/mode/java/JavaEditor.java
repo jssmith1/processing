@@ -177,6 +177,7 @@ public class JavaEditor extends Editor {
   public EditorFooter createFooter() {
     EditorFooter footer = super.createFooter();
     addErrorTable(footer);
+    addEditorHints(footer);
     return footer;
   }
 
