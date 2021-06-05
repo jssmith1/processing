@@ -67,9 +67,6 @@ public class EditorHints extends JScrollPane {
         BAD_CODE_BOX.setBorder(EMPTY_SPACING);
         GOOD_CODE_BOX.setBorder(EMPTY_SPACING);
 
-        BAD_CODE_BOX.add(new JLabel("Incorrect Code"));
-        GOOD_CODE_BOX.add(new JLabel("Good Code"));
-
         codeBox.add(BAD_CODE_BOX);
         codeBox.add(GOOD_CODE_BOX);
 
@@ -96,6 +93,7 @@ public class EditorHints extends JScrollPane {
         testHint.addGoodCode("// Good code");
         testHint.addBadCode("// Bad code");
         testingList.add(testHint);
+        testingList.add(testHint);
 
         setCurrentHints(testingList);
     }
@@ -115,24 +113,32 @@ public class EditorHints extends JScrollPane {
         SUGGESTION_COUNTER.setText("Hint " + (hintIndex + 1)
                 + "/" + HINTS.size());
 
-        for (String badCode : visibleHint.getBadCode()) {
-            BAD_CODE_BOX.add(Box.createVerticalStrut(8));
+        BAD_CODE_BOX.removeAll();
+        GOOD_CODE_BOX.removeAll();
 
-            JTextArea example = new JTextArea(badCode);
-            example.setEditable(false);
-            example.setBorder(RED_BORDER);
-            example.setBorder(BorderFactory.createCompoundBorder(RED_BORDER, EMPTY_SPACING));
-            BAD_CODE_BOX.add(example);
+        BAD_CODE_BOX.add(new JLabel("Incorrect Code"));
+        GOOD_CODE_BOX.add(new JLabel("Good Code"));
+
+        for (String badCode : visibleHint.getBadCode()) {
+            addCodeBox(badCode, BAD_CODE_BOX, RED_BORDER);
         }
 
         for (String goodCode : visibleHint.getGoodCode()) {
-            GOOD_CODE_BOX.add(Box.createVerticalStrut(8));
-
-            JTextArea example = new JTextArea(goodCode);
-            example.setEditable(false);
-            example.setBorder(BorderFactory.createCompoundBorder(GREEN_BORDER, EMPTY_SPACING));
-            GOOD_CODE_BOX.add(example);
+            addCodeBox(goodCode, GOOD_CODE_BOX, GREEN_BORDER);
         }
+
+        // Scroll to the top so user sees suggestion title
+        scrollRectToVisible(PROBLEM_TITLE_LABEL.getBounds());
+
+    }
+
+    private void addCodeBox(String example, JComponent parent, Border border) {
+        parent.add(Box.createVerticalStrut(8));
+
+        JTextArea textArea = new JTextArea(example);
+        textArea.setEditable(false);
+        textArea.setBorder(BorderFactory.createCompoundBorder(border, EMPTY_SPACING));
+        parent.add(textArea);
     }
 
     private static class Hint {
