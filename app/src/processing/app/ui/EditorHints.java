@@ -22,8 +22,8 @@ public class EditorHints extends JScrollPane {
     private final JLabel PROBLEM_TITLE_LABEL;
     private final JLabel SUGGESTION_TITLE_LABEL;
     private final JLabel SUGGESTION_COUNTER;
-    private final JPanel BAD_CODE_BOX;
-    private final JPanel GOOD_CODE_BOX;
+    private final Box BAD_CODE_BOX;
+    private final Box GOOD_CODE_BOX;
 
     private int hintIndex;
 
@@ -61,15 +61,11 @@ public class EditorHints extends JScrollPane {
 
         // Create a split box to hold code examples
         Box codeBox = Box.createHorizontalBox();
-        BAD_CODE_BOX = new JPanel();
-        GOOD_CODE_BOX = new JPanel();
+        BAD_CODE_BOX = Box.createVerticalBox();
+        GOOD_CODE_BOX = Box.createVerticalBox();
 
         BAD_CODE_BOX.setBorder(EMPTY_SPACING);
         GOOD_CODE_BOX.setBorder(EMPTY_SPACING);
-
-        GridLayout singleColLayout = new GridLayout(0, 1, 30, 10);
-        BAD_CODE_BOX.setLayout(singleColLayout);
-        GOOD_CODE_BOX.setLayout(singleColLayout);
 
         BAD_CODE_BOX.add(new JLabel("Incorrect Code"));
         GOOD_CODE_BOX.add(new JLabel("Good Code"));
@@ -120,14 +116,20 @@ public class EditorHints extends JScrollPane {
                 + "/" + HINTS.size());
 
         for (String badCode : visibleHint.getBadCode()) {
-            JLabel example = new JLabel(badCode);
+            BAD_CODE_BOX.add(Box.createVerticalStrut(8));
+
+            JTextArea example = new JTextArea(badCode);
+            example.setEditable(false);
             example.setBorder(RED_BORDER);
             example.setBorder(BorderFactory.createCompoundBorder(RED_BORDER, EMPTY_SPACING));
             BAD_CODE_BOX.add(example);
         }
 
         for (String goodCode : visibleHint.getGoodCode()) {
-            JLabel example = new JLabel(goodCode);
+            GOOD_CODE_BOX.add(Box.createVerticalStrut(8));
+
+            JTextArea example = new JTextArea(goodCode);
+            example.setEditable(false);
             example.setBorder(BorderFactory.createCompoundBorder(GREEN_BORDER, EMPTY_SPACING));
             GOOD_CODE_BOX.add(example);
         }
