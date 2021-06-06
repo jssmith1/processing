@@ -21,6 +21,10 @@
 package processing.app;
 
 
+import processing.app.ui.EditorHints;
+
+import java.util.List;
+
 public interface Problem {
   public boolean isError();
   public boolean isWarning();
@@ -31,5 +35,8 @@ public interface Problem {
 
   public int getStartOffset();
   public int getStopOffset();
+
+  public List<EditorHints.Hint> getHints();
+  public void setHints(List<EditorHints.Hint> newHints);
 }
 

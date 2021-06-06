@@ -58,6 +58,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -607,7 +608,9 @@ public abstract class Editor extends JFrame implements RunnerListener {
     return console;
   }
 
-
+  public EditorHints getEditorHints() {
+    return editorHints;
+  }
 
 //  public Settings getTheme() {
 //    return mode.getTheme();
@@ -3132,7 +3135,10 @@ public abstract class Editor extends JFrame implements RunnerListener {
       int type = problem.isError() ?
         EditorStatus.CURSOR_LINE_ERROR : EditorStatus.CURSOR_LINE_WARNING;
       statusMessage(problem.getMessage(), type);
+      editorHints.setCurrentHints(problem.getHints());
     } else {
+      editorHints.clear();
+
       switch (getStatusMode()) {
         case EditorStatus.CURSOR_LINE_ERROR:
         case EditorStatus.CURSOR_LINE_WARNING:

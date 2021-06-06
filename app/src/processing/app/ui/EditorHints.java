@@ -24,6 +24,7 @@ public class EditorHints extends JScrollPane {
     private final JLabel SUGGESTION_COUNTER;
     private final Box BAD_CODE_BOX;
     private final Box GOOD_CODE_BOX;
+    private final Box NAV_BOX;
 
     private int hintIndex;
 
@@ -77,31 +78,40 @@ public class EditorHints extends JScrollPane {
                 (event) -> setVisibleHint((hintIndex + 1) % HINTS.size())
         );
 
-        Box navBox = Box.createHorizontalBox();
-        navBox.add(Box.createHorizontalGlue());
-        navBox.add(navButton);
+        NAV_BOX = Box.createHorizontalBox();
+        NAV_BOX.add(Box.createHorizontalGlue());
+        NAV_BOX.add(navButton);
 
         panel.add(headerBox, BorderLayout.NORTH);
         panel.add(codeBox, BorderLayout.CENTER);
-        panel.add(navBox, BorderLayout.SOUTH);
+        panel.add(NAV_BOX, BorderLayout.SOUTH);
 
-        ArrayList<Hint> testingList = new ArrayList<>();
-        Hint testHint = new Hint("You did not return a value of type int like the definition of method doSomething().",
-                "You may have forgotten the return statement for the method doSomething().");
-        testHint.addGoodCode("// Good code");
-        testHint.addBadCode("// Bad code");
-        testHint.addGoodCode("// Good code");
-        testHint.addBadCode("// Bad code");
-        testingList.add(testHint);
-        testingList.add(testHint);
-
-        setCurrentHints(testingList);
+        clear();
     }
 
-    private void setCurrentHints(List<Hint> newHints) {
+    public void clear() {
         HINTS.clear();
-        HINTS.addAll(newHints);
-        setVisibleHint(0);
+
+        PROBLEM_TITLE_LABEL.setVisible(false);
+        SUGGESTION_TITLE_LABEL.setVisible(false);
+        SUGGESTION_COUNTER.setVisible(false);
+        BAD_CODE_BOX.removeAll();
+        GOOD_CODE_BOX.removeAll();
+        NAV_BOX.setVisible(false);
+    }
+
+    public void setCurrentHints(List<Hint> newHints) {
+        clear();
+
+        if (newHints.size() > 0) {
+            PROBLEM_TITLE_LABEL.setVisible(true);
+            SUGGESTION_TITLE_LABEL.setVisible(true);
+            SUGGESTION_COUNTER.setVisible(true);
+            NAV_BOX.setVisible(true);
+
+            HINTS.addAll(newHints);
+            setVisibleHint(0);
+        }
     }
 
     private void setVisibleHint(int index) {
@@ -117,7 +127,7 @@ public class EditorHints extends JScrollPane {
         GOOD_CODE_BOX.removeAll();
 
         BAD_CODE_BOX.add(new JLabel("Incorrect Code"));
-        GOOD_CODE_BOX.add(new JLabel("Good Code"));
+        GOOD_CODE_BOX.add(new JLabel("Correct Code"));
 
         for (String badCode : visibleHint.getBadCode()) {
             addCodeBox(badCode, BAD_CODE_BOX, RED_BORDER);
@@ -141,42 +151,19 @@ public class EditorHints extends JScrollPane {
         parent.add(textArea);
     }
 
-    private static class Hint {
-        private final String PROBLEM_TEXT;
-        private final String SUGGESTION_TEXT;
-        private final List<String> GOOD_CODE;
-        private final List<String> BAD_CODE;
+    public interface Hint {
 
-        public Hint(String problemText, String suggestionText) {
-            PROBLEM_TEXT = problemText;
-            SUGGESTION_TEXT = suggestionText;
-            GOOD_CODE = new ArrayList<>();
-            BAD_CODE = new ArrayList<>();
-        }
+        void addGoodCode(String goodCode);
 
-        public void addGoodCode(String goodCode) {
-            GOOD_CODE.add(goodCode);
-        }
+        void addBadCode(String badCode);
 
-        public void addBadCode(String badCode) {
-            BAD_CODE.add(badCode);
-        }
+        String getProblemText();
 
-        public String getProblemText() {
-            return PROBLEM_TEXT;
-        }
+        String getSuggestionText();
 
-        public String getSuggestionText() {
-            return SUGGESTION_TEXT;
-        }
+        List<String> getBadCode();
 
-        public List<String> getBadCode() {
-            return BAD_CODE;
-        }
-
-        public List<String> getGoodCode() {
-            return GOOD_CODE;
-        }
+        List<String> getGoodCode();
 
     }
 

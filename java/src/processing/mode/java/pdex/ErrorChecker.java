@@ -26,6 +26,7 @@ import com.google.classpath.RegExpResourceFilter;
 
 import processing.app.Language;
 import processing.app.Problem;
+import processing.app.ui.EditorHints;
 import processing.mode.java.JavaEditor;
 import processing.mode.java.JavaMode;
 import processing.mode.java.pdex.PreprocessedSketch.SketchInterval;
@@ -126,6 +127,11 @@ class ErrorChecker {
               p.setImportSuggestions(s);
             }
 
+            // Create hints
+            if (p != null) {
+              p.setHints(JavaHint.fromIProblem(iproblem));
+            }
+
             return p;
           })
           .filter(Objects::nonNull)
@@ -137,6 +143,7 @@ class ErrorChecker {
     if (scheduledUiUpdate != null) {
       scheduledUiUpdate.cancel(true);
     }
+
     // Update UI after a delay. See #2677
     long delay = nextUiUpdate - System.currentTimeMillis();
     Runnable uiUpdater = () -> {
@@ -287,6 +294,8 @@ class ErrorChecker {
     if (missingBraceProblem != null) {
       JavaProblem p = convertIProblem(missingBraceProblem, ps);
       if (p != null) {
+        p.setHints(JavaHint.fromIProblem(missingBraceProblem));
+
         problems.clear();
         problems.add(p);
       }

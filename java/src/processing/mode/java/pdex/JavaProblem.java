@@ -23,6 +23,10 @@ package processing.mode.java.pdex;
 import org.eclipse.jdt.core.compiler.IProblem;
 
 import processing.app.Problem;
+import processing.app.ui.EditorHints;
+
+import java.util.Collections;
+import java.util.List;
 
 
 /**
@@ -58,6 +62,11 @@ public class JavaProblem implements Problem {
    */
   private String[] importSuggestions;
 
+  /**
+   * Common errors have code examples in a separate tab.
+   */
+  private List<EditorHints.Hint> hints;
+
   public static final int ERROR = 1, WARNING = 2;
 
   public JavaProblem(String message, int type, int tabIndex, int lineNumber) {
@@ -65,6 +74,7 @@ public class JavaProblem implements Problem {
     this.type = type;
     this.tabIndex = tabIndex;
     this.lineNumber = lineNumber;
+    hints = Collections.emptyList();
   }
 
   /**
@@ -132,6 +142,16 @@ public class JavaProblem implements Problem {
 
   public void setImportSuggestions(String[] a) {
     importSuggestions = a;
+  }
+
+  @Override
+  public List<EditorHints.Hint> getHints() {
+    return hints;
+  }
+
+  @Override
+  public void setHints(List<EditorHints.Hint> newHints) {
+    hints = newHints;
   }
 
   @Override
