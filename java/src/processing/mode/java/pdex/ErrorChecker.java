@@ -24,6 +24,11 @@ import com.google.classpath.ClassPath;
 import com.google.classpath.ClassPathFactory;
 import com.google.classpath.RegExpResourceFilter;
 
+import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.NumberLiteral;
+import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import processing.app.Language;
 import processing.app.Problem;
 import processing.app.ui.EditorHints;
@@ -129,7 +134,7 @@ class ErrorChecker {
 
             // Create hints
             if (p != null) {
-              p.setHints(JavaHint.fromIProblem(iproblem));
+              p.setHints(JavaHint.fromIProblem(iproblem, ps.compilationUnit));
             }
 
             return p;
@@ -294,7 +299,7 @@ class ErrorChecker {
     if (missingBraceProblem != null) {
       JavaProblem p = convertIProblem(missingBraceProblem, ps);
       if (p != null) {
-        p.setHints(JavaHint.fromIProblem(missingBraceProblem));
+        p.setHints(JavaHint.fromIProblem(missingBraceProblem, ps.compilationUnit));
 
         problems.clear();
         problems.add(p);
