@@ -25,6 +25,8 @@ public class JavaHint implements EditorHints.Hint {
         );
 
         switch (compilerError.getID()) {
+            case IProblem.MustDefineEitherDimensionExpressionsOrInitializer:
+                return getArrDimHints(problemNode);
             case IProblem.TypeMismatch:
                 String providedType = truncateClass(problemArguments[0]);
                 String requiredType = truncateClass(problemArguments[1]);
@@ -32,6 +34,25 @@ public class JavaHint implements EditorHints.Hint {
         }
 
         return Collections.emptyList();
+    }
+
+    private static List<EditorHints.Hint> getArrDimHints(ASTNode problemNode) {
+        List<EditorHints.Hint> hints = new ArrayList<>();
+
+        String arrType = problemNode.toString();
+        String arrName = ((VariableDeclarationFragment) problemNode.getParent().getParent().getParent())
+                .getName().toString();
+        String problemTitle = "You have not given the array  a certain size.";
+
+        // Suggest adding array dimension
+        JavaHint addDim = new JavaHint(problemTitle,
+                "You have not given the array a certain size."
+        );
+        addDim.addBadCode(arrType + "[] " + arrName + " = new " + arrType + "[];");
+        addDim.addGoodCode(arrType + "[] " + arrName + " = new " + arrType + "[5];");
+        hints.add(addDim);
+
+        return hints;
     }
 
     private static List<EditorHints.Hint> getTypeMismatchHints(String providedType, String requiredType,
@@ -42,6 +63,7 @@ public class JavaHint implements EditorHints.Hint {
         String problemTitle = "You are trying to use the " + getVarDescription(requiredType)
                 + " " + varName + " as a " + getVarDescription(providedType) + ".";
 
+        // Suggest changing variable declaration
         JavaHint changeVarDec = new JavaHint(problemTitle,
                 "You might need to change the variable declaration of "
                         + varName + " to type " + providedType + "."
@@ -50,6 +72,7 @@ public class JavaHint implements EditorHints.Hint {
         changeVarDec.addGoodCode(getDemoDeclaration(providedType, varName));
         hints.add(changeVarDec);
 
+        // Suggest changing variable value
         JavaHint changeValue = new JavaHint(problemTitle,
                 "You might need to change the value of "
                         + varName + " to a " + requiredType + "."
@@ -58,6 +81,7 @@ public class JavaHint implements EditorHints.Hint {
         changeValue.addGoodCode(getDemoDeclaration(requiredType, varName));
         hints.add(changeValue);
 
+        // Suggest changing return type
         JavaHint changeReturnType = new JavaHint(problemTitle,
                 "You might need to change the method's return type to "
                        + providedType + "."
