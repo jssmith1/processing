@@ -2,6 +2,7 @@ package processing.mode.java.pdex;
 
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.ArrayCreation;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import processing.app.ui.EditorHints;
 
@@ -27,6 +28,8 @@ public class JavaHint implements EditorHints.Hint {
         switch (compilerError.getID()) {
             case IProblem.MustDefineEitherDimensionExpressionsOrInitializer:
                 return getArrDimHints(problemNode);
+            case IProblem.IllegalDimension:
+                return getTwoDimArrHints(problemNode);
             case IProblem.TypeMismatch:
                 String providedType = truncateClass(problemArguments[0]);
                 String requiredType = truncateClass(problemArguments[1]);
@@ -42,14 +45,36 @@ public class JavaHint implements EditorHints.Hint {
         String arrType = problemNode.toString();
         String arrName = ((VariableDeclarationFragment) problemNode.getParent().getParent().getParent())
                 .getName().toString();
-        String problemTitle = "You have not given the array  a certain size.";
+        String problemTitle = "You have not given the array a certain size.";
 
         // Suggest adding array dimension
         JavaHint addDim = new JavaHint(problemTitle,
-                "You have not given the array a certain size."
+                "You may have forgotten to type the size "
+                        + "of the array inside the brackets."
         );
         addDim.addBadCode(arrType + "[] " + arrName + " = new " + arrType + "[];");
         addDim.addGoodCode(arrType + "[] " + arrName + " = new " + arrType + "[5];");
+        hints.add(addDim);
+
+        return hints;
+    }
+
+    private static List<EditorHints.Hint> getTwoDimArrHints(ASTNode problemNode) {
+        List<EditorHints.Hint> hints = new ArrayList<>();
+
+        String arrType = ((ArrayCreation) problemNode.getParent()).getType().getElementType().toString();
+        String arrName = ((VariableDeclarationFragment) problemNode.getParent().getParent())
+                .getName().toString();
+        String problemTitle = "In a 2D array, you have not given the "
+                + "innermost array a certain size.";
+
+        // Suggest adding array dimension
+        JavaHint addDim = new JavaHint(problemTitle,
+                "Specify the size of the innermost array."
+        );
+        addDim.addBadCode(arrType + "[][] " + arrName + " = new " + arrType + "[][5];");
+        addDim.addGoodCode(arrType + "[][] " + arrName + " = new " + arrType + "[5][5];");
+        addDim.addGoodCode(arrType + "[][] " + arrName + " = new " + arrType + "[5][];");
         hints.add(addDim);
 
         return hints;
