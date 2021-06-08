@@ -3,6 +3,7 @@ package processing.mode.java.pdex;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ArrayCreation;
+import org.eclipse.jdt.core.dom.ArrayType;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import processing.app.ui.EditorHints;
 
@@ -30,6 +31,8 @@ public class JavaHint implements EditorHints.Hint {
                 return getArrDimHints(problemNode);
             case IProblem.IllegalDimension:
                 return getTwoDimArrHints(problemNode);
+            case IProblem.CannotDefineDimensionExpressionsWithInit:
+                return getTwoInitializerArrHints(problemNode);
             case IProblem.TypeMismatch:
                 String providedType = truncateClass(problemArguments[0]);
                 String requiredType = truncateClass(problemArguments[1]);
@@ -76,6 +79,29 @@ public class JavaHint implements EditorHints.Hint {
         addDim.addGoodCode(arrType + "[][] " + arrName + " = new " + arrType + "[5][5];");
         addDim.addGoodCode(arrType + "[][] " + arrName + " = new " + arrType + "[5][];");
         hints.add(addDim);
+
+        return hints;
+    }
+
+    private static List<EditorHints.Hint> getTwoInitializerArrHints(ASTNode problemNode) {
+        List<EditorHints.Hint> hints = new ArrayList<>();
+
+        String arrType = ((ArrayCreation) problemNode.getParent()).getType().getElementType().toString();
+        String arrName = ((VariableDeclarationFragment) problemNode.getParent().getParent())
+                .getName().toString();
+        String problemTitle = "You defined an array twice.";
+
+        // Suggest adding array dimension
+        JavaHint chooseInitMethod = new JavaHint(problemTitle,
+                "You may have used both methods to construct an array together."
+        );
+
+        String initList = buildInitializerList(arrType, 5);
+        chooseInitMethod.addBadCode(arrType + "[] " + arrName + " = new " + arrType
+                + "[5] " + initList + ";");
+        chooseInitMethod.addGoodCode(arrType + "[] " + arrName + " = new " + arrType + "[5];");
+        chooseInitMethod.addGoodCode(arrType + "[] " + arrName + " = " + initList + ";");
+        hints.add(chooseInitMethod);
 
         return hints;
     }
@@ -135,6 +161,18 @@ public class JavaHint implements EditorHints.Hint {
         }
 
         return hints;
+    }
+
+    private static String buildInitializerList(String type, int size) {
+        StringBuilder initializerList = new StringBuilder("{");
+        String separator = ", ";
+
+        for (int item = 0; item < size; item++) {
+            initializerList.append(getDemoValue(type)).append(separator);
+        }
+
+        int lastSeparatorIndex = initializerList.lastIndexOf(separator);
+        return initializerList.substring(0, lastSeparatorIndex) + "}";
     }
 
     private static String getVarDescription(String typeName) {
