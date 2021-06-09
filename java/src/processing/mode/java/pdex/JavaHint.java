@@ -3,7 +3,7 @@ package processing.mode.java.pdex;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ArrayCreation;
-import org.eclipse.jdt.core.dom.ArrayType;
+import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import processing.app.ui.EditorHints;
 
@@ -11,12 +11,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
+import java.util.stream.Collectors;
 
 public class JavaHint implements EditorHints.Hint {
     private static final List<String> PRIMITIVES = Arrays.asList(
             "byte", "short", "int", "long",
             "float", "double", "boolean", "char"
     );
+    private static final Random RANDOM = new Random();
+    private static final String[] ALPHABET = {
+            "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
+            "n", "o", "p", "q", "r", "s", "t", "u", "v", "x", "y", "z"
+    };
 
     public static List<EditorHints.Hint> fromIProblem(IProblem compilerError, ASTNode ast) {
         String[] problemArguments = compilerError.getArguments();
@@ -33,6 +40,8 @@ public class JavaHint implements EditorHints.Hint {
                 return getTwoDimArrHints(problemNode);
             case IProblem.CannotDefineDimensionExpressionsWithInit:
                 return getTwoInitializerArrHints(problemNode);
+            case IProblem.ParameterMismatch:
+                return getParamMismatchHints(problemNode);
             case IProblem.TypeMismatch:
                 String providedType = truncateClass(problemArguments[0]);
                 String requiredType = truncateClass(problemArguments[1]);
@@ -102,6 +111,34 @@ public class JavaHint implements EditorHints.Hint {
         chooseInitMethod.addGoodCode(arrType + "[] " + arrName + " = new " + arrType + "[5];");
         chooseInitMethod.addGoodCode(arrType + "[] " + arrName + " = " + initList + ";");
         hints.add(chooseInitMethod);
+
+        return hints;
+    }
+
+    private static List<EditorHints.Hint> getParamMismatchHints(ASTNode problemNode) {
+        List<EditorHints.Hint> hints = new ArrayList<>();
+
+        MethodInvocation invoc = (MethodInvocation) problemNode.getParent();
+        String methodName = invoc.getName().toString();
+        List<String> providedParams = ((List<?>) invoc.arguments()).stream()
+                .map(Object::toString).collect(Collectors.toList());
+        List<String> requiredParamTypes = Arrays.stream(
+                invoc.resolveMethodBinding().getParameterTypes()
+        ).map(Object::toString).collect(Collectors.toList());
+
+        String methodSig = methodName + "("
+                + String.join(", ", requiredParamTypes)
+                + ")";
+
+        String problemTitle = "You are trying to use the method " + methodSig
+                + " but with incorrect parameters.";
+
+        // Suggest adding array dimension
+        JavaHint changeParam = new JavaHint(problemTitle,
+                "You might need to change a parameter of " + methodSig
+                        + " to the expected type."
+        );
+        hints.add(changeParam);
 
         return hints;
     }
@@ -197,16 +234,19 @@ public class JavaHint implements EditorHints.Hint {
             case "short":
             case "int":
             case "long":
-                return "5";
+                return Integer.toString(RANDOM.nextInt(100));
             case "float":
             case "double":
-                return "5.0";
+                return String.format("%1$,.2f", Math.random() * 10);
             case "boolean":
-                return "true";
+                return Boolean.toString(Math.random() > 0.5);
             case "char":
-                return "'a'";
+                return ALPHABET[RANDOM.nextInt(ALPHABET.length)];
             case "String":
+
+                // Hard-code this to avoid inappropriate random strings
                 return "\"hello world\"";
+
             default:
                 return "new " + typeName + "()";
         }
