@@ -3,6 +3,7 @@ package processing.mode.java.pdex;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ArrayCreation;
+import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import processing.app.ui.EditorHints;
@@ -123,6 +124,9 @@ public class JavaHint implements EditorHints.Hint {
         MethodInvocation invoc = (MethodInvocation) problemNode.getParent();
         List<String> providedParams = ((List<?>) invoc.arguments()).stream()
                 .map(Object::toString).collect(Collectors.toList());
+        List<String> providedParamTypes = ((List<?>) invoc.arguments()).stream().map(
+                (param) -> ((Expression) param).resolveTypeBinding().getName()
+        ).collect(Collectors.toList());
         List<String> requiredParamTypes = Arrays.stream(
                 invoc.resolveMethodBinding().getParameterTypes()
         ).map(Object::toString).collect(Collectors.toList());
@@ -134,20 +138,35 @@ public class JavaHint implements EditorHints.Hint {
         String problemTitle = "You are trying to use the method " + methodSig
                 + " but with incorrect parameters.";
 
+        String badCode = methodDec + " {\n  ...\n}\n"
+                + "void setup() {\n  "
+                + methodName + "(" + String.join(", ", providedParams) + ");\n"
+                + "}\n";
+
         // Suggest changing provided parameter
         JavaHint changeParam = new JavaHint(problemTitle,
                 "You might need to change a parameter of " + methodSig
                         + " to the expected type."
         );
-        changeParam.addBadCode(methodDec + " {\n  ...\n}\n"
-                + "void setup() {\n  "
-                + methodName + "(" + String.join(", ", providedParams) + ");\n"
-                + "}\n");
+        changeParam.addBadCode(badCode);
         changeParam.addGoodCode(methodDec + " {\n  ...\n}\n"
                 + "void setup() {\n  "
                 + getMethodCall(methodName, requiredParamTypes) + ";\n"
                 + "}\n");
         hints.add(changeParam);
+
+        // Suggest changing definition parameter
+        JavaHint changeDef = new JavaHint(problemTitle,
+                "You might need to change a parameter of " + methodSig
+                        + " in the method declaration to the expected type."
+        );
+        changeDef.addBadCode(badCode);
+        changeDef.addGoodCode(getMethodDec(methodName, methodReturnType, providedParamTypes)
+                + " {\n  ...\n}\n"
+                + "void setup() {\n  "
+                + methodName + "(" + String.join(", ", providedParams) + ");\n"
+                + "}\n");
+        hints.add(changeDef);
 
         return hints;
     }
