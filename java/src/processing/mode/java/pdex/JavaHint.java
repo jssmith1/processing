@@ -4,6 +4,7 @@ import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ArrayCreation;
 import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import processing.app.ui.EditorHints;
@@ -126,10 +127,10 @@ public class JavaHint implements EditorHints.Hint {
                 .map(Object::toString).collect(Collectors.toList());
         List<String> providedParamTypes = ((List<?>) invoc.arguments()).stream().map(
                 (param) -> ((Expression) param).resolveTypeBinding().getName()
-        ).collect(Collectors.toList());
+        ).collect(Collectors.toList());;
         List<String> requiredParamTypes = Arrays.stream(
                 invoc.resolveMethodBinding().getParameterTypes()
-        ).map(Object::toString).collect(Collectors.toList());
+        ).map(ITypeBinding::getName).collect(Collectors.toList());
 
         String methodName = invoc.getName().toString();
         String methodReturnType = invoc.resolveMethodBinding().getReturnType().toString();
@@ -167,6 +168,36 @@ public class JavaHint implements EditorHints.Hint {
                 + methodName + "(" + String.join(", ", providedParams) + ");\n"
                 + "}\n");
         hints.add(changeDef);
+
+        if (providedParamTypes.size() != requiredParamTypes.size()) {
+
+            // Suggest changing number of provided parameters
+            JavaHint changeNumParams = new JavaHint(problemTitle,
+                    "You may need to change the number of parameters to the "
+                            + "expected amount when calling " + methodSig + "."
+            );
+            changeNumParams.addBadCode(badCode);
+            changeNumParams.addGoodCode(methodDec + " {\n  ...\n}\n"
+                    + "void setup() {\n  "
+                    + getMethodCall(methodName, requiredParamTypes) + ";\n"
+                    + "}\n");
+            hints.add(changeNumParams);
+
+            // Suggest changing number of definition parameters
+            JavaHint changeNumDefParams = new JavaHint(problemTitle,
+                    "Change the number of parameters in the " + methodSig
+                            + " method declaration."
+            );
+            changeNumDefParams.addBadCode(badCode);
+            changeNumDefParams.addGoodCode(
+                    getMethodDec(methodName, methodReturnType, providedParamTypes)
+                            + " {\n  ...\n}\n"
+                            + "void setup() {\n  "
+                            + methodName + "(" + String.join(", ", providedParams) + ");\n"
+                            + "}\n");
+            hints.add(changeNumDefParams);
+
+        }
 
         return hints;
     }
