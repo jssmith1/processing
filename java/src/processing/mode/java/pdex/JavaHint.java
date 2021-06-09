@@ -14,7 +14,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -44,6 +43,8 @@ public class JavaHint implements EditorHints.Hint {
                 return getTwoDimArrHints(problemNode);
             case IProblem.CannotDefineDimensionExpressionsWithInit:
                 return getTwoInitializerArrHints(problemNode);
+            case IProblem.UndefinedMethod:
+                return getMissingMethodHints(problemNode);
             case IProblem.ParameterMismatch:
                 return getParamMismatchHints(problemNode);
             case IProblem.TypeMismatch:
@@ -119,6 +120,58 @@ public class JavaHint implements EditorHints.Hint {
         return hints;
     }
 
+    private static List<EditorHints.Hint> getMissingMethodHints(ASTNode problemNode) {
+        List<EditorHints.Hint> hints = new ArrayList<>();
+
+        MethodInvocation invoc = (MethodInvocation) problemNode.getParent();
+        List<String> providedParams = ((List<?>) invoc.arguments()).stream()
+                .map(Object::toString).collect(Collectors.toList());
+        List<String> providedParamTypes = ((List<?>) invoc.arguments()).stream().map(
+                (param) -> ((Expression) param).resolveTypeBinding().getName()
+        ).collect(Collectors.toList());
+
+        /* We don't know the desired return type, so use a
+           familiar one like "int" instead of one like "void." */
+        String dummyReturnType = "int";
+
+        String methodName = invoc.getName().toString();
+        String nameWithParens = methodName + "()";
+        String currMethodCall = methodName + "(" + String.join(", ", providedParams) + ")";
+        String renamedMethodCall = "correctName(" + String.join(", ", providedParams) + ")";
+
+        String problemTitle = "You are trying to use a function, "
+                + nameWithParens
+                + ", which Processing does not recognize. (\"Method\" "
+                + "and \"function\" are used interchangeably here.)";
+
+        // Suggest using correct Java name
+        JavaHint useJavaName = new JavaHint(problemTitle,
+                "If you are trying to use an existing Java function, "
+                        + "make sure you match the name of " + nameWithParens
+                        + " with the function."
+
+        );
+        useJavaName.addBadCode("String str = " + getDemoValue("String") + ";\n"
+                + "str." + currMethodCall + ";");
+        useJavaName.addGoodCode("String str = " + getDemoValue("String") + ";\n"
+                + "str." + renamedMethodCall + ";");
+        hints.add(useJavaName);
+
+        // Suggest using correct user-given name
+        JavaHint useDeclarationName = new JavaHint(problemTitle,
+                "You may need to change the name of "
+                        + nameWithParens + " to the method you created."
+        );
+        useDeclarationName.addBadCode(currMethodCall + ";");
+        useDeclarationName.addGoodCode(currMethodCall + ";\n"
+                + getMethodDec(methodName, dummyReturnType, providedParamTypes) + " {\n"
+                + "  ...\n"
+                + "}");
+        hints.add(useDeclarationName);
+
+        return hints;
+    }
+
     private static List<EditorHints.Hint> getParamMismatchHints(ASTNode problemNode) {
         List<EditorHints.Hint> hints = new ArrayList<>();
 
@@ -127,7 +180,7 @@ public class JavaHint implements EditorHints.Hint {
                 .map(Object::toString).collect(Collectors.toList());
         List<String> providedParamTypes = ((List<?>) invoc.arguments()).stream().map(
                 (param) -> ((Expression) param).resolveTypeBinding().getName()
-        ).collect(Collectors.toList());;
+        ).collect(Collectors.toList());
         List<String> requiredParamTypes = Arrays.stream(
                 invoc.resolveMethodBinding().getParameterTypes()
         ).map(ITypeBinding::getName).collect(Collectors.toList());
