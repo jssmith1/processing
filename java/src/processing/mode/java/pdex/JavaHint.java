@@ -12,7 +12,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class JavaHint implements EditorHints.Hint {
     private static final List<String> PRIMITIVES = Arrays.asList(
@@ -119,25 +121,32 @@ public class JavaHint implements EditorHints.Hint {
         List<EditorHints.Hint> hints = new ArrayList<>();
 
         MethodInvocation invoc = (MethodInvocation) problemNode.getParent();
-        String methodName = invoc.getName().toString();
         List<String> providedParams = ((List<?>) invoc.arguments()).stream()
                 .map(Object::toString).collect(Collectors.toList());
         List<String> requiredParamTypes = Arrays.stream(
                 invoc.resolveMethodBinding().getParameterTypes()
         ).map(Object::toString).collect(Collectors.toList());
 
-        String methodSig = methodName + "("
-                + String.join(", ", requiredParamTypes)
-                + ")";
-
+        String methodName = invoc.getName().toString();
+        String methodReturnType = invoc.resolveMethodBinding().getReturnType().toString();
+        String methodSig = getMethodSig(methodName, requiredParamTypes);
+        String methodDec = getMethodDec(methodName, methodReturnType, requiredParamTypes);
         String problemTitle = "You are trying to use the method " + methodSig
                 + " but with incorrect parameters.";
 
-        // Suggest adding array dimension
+        // Suggest changing provided parameter
         JavaHint changeParam = new JavaHint(problemTitle,
                 "You might need to change a parameter of " + methodSig
                         + " to the expected type."
         );
+        changeParam.addBadCode(methodDec + " {\n  ...\n}\n"
+                + "void setup() {\n  "
+                + methodName + "(" + String.join(", ", providedParams) + ");\n"
+                + "}\n");
+        changeParam.addGoodCode(methodDec + " {\n  ...\n}\n"
+                + "void setup() {\n  "
+                + getMethodCall(methodName, requiredParamTypes) + ";\n"
+                + "}\n");
         hints.add(changeParam);
 
         return hints;
@@ -175,12 +184,12 @@ public class JavaHint implements EditorHints.Hint {
                        + providedType + "."
         );
         changeReturnType.addBadCode(requiredType + " doSomething() {\n"
-                + "\t" + getDemoDeclaration(providedType, varName) + "\n"
-                + "\t" + "return " + varName + ";\n"
+                + "  " + getDemoDeclaration(providedType, varName) + "\n"
+                + "  " + "return " + varName + ";\n"
                 + "}");
         changeReturnType.addGoodCode(providedType + " doSomething() {\n"
-                + "\t" + getDemoDeclaration(providedType, varName) + "\n"
-                + "\t" + "return " + varName + ";\n"
+                + "  " + getDemoDeclaration(providedType, varName) + "\n"
+                + "  " + "return " + varName + ";\n"
                 + "}");
         hints.add(changeReturnType);
 
@@ -198,6 +207,27 @@ public class JavaHint implements EditorHints.Hint {
         }
 
         return hints;
+    }
+
+    private static String getMethodSig(String methodName, List<String> paramTypes) {
+        return methodName + "(" + String.join(", ", paramTypes) + ")";
+    }
+
+    private static String getMethodDec(String name, String returnType, List<String> paramTypes) {
+        IntStream indices = IntStream.range(0, paramTypes.size());
+        List<String> typesWithNames = indices.mapToObj(
+                (index) -> paramTypes.get(index) + " param" + (index + 1)
+        ).collect(Collectors.toList());
+
+        return returnType + " " + name + "(" + String.join(", ", typesWithNames) + ")";
+    }
+
+    private static String getMethodCall(String name, List<String> paramTypes) {
+        List<String> paramValues = paramTypes.stream().map(
+                JavaHint::getDemoValue
+        ).collect(Collectors.toList());
+
+        return name + "(" + String.join(", ", paramValues) + ")";
     }
 
     private static String buildInitializerList(String type, int size) {
