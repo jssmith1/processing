@@ -8,6 +8,7 @@ import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import processing.app.ui.EditorHints;
 
 import java.util.ArrayList;
@@ -46,14 +47,16 @@ public class JavaHint implements EditorHints.Hint {
                 return getTwoInitializerArrHints(problemNode);
             case IProblem.UndefinedMethod:
                 return getMissingMethodHints(problemNode);
-            case IProblem.ShouldReturnValue:
-                return getMissingReturnHints(problemNode);
             case IProblem.ParameterMismatch:
                 return getParamMismatchHints(problemNode);
+            case IProblem.ShouldReturnValue:
+                return getMissingReturnHints(problemNode);
             case IProblem.TypeMismatch:
                 String providedType = truncateClass(problemArguments[0]);
                 String requiredType = truncateClass(problemArguments[1]);
                 return getTypeMismatchHints(providedType, requiredType, problemNode);
+            case IProblem.UndefinedType:
+                return getMissingTypeHints(problemArguments[0], problemNode);
         }
 
         return Collections.emptyList();
@@ -409,6 +412,64 @@ public class JavaHint implements EditorHints.Hint {
                     + varName + " = " + varName + " + 3.14;");
             hints.add(changeOpType);
         }
+
+        return hints;
+    }
+
+    private static List<EditorHints.Hint> getMissingTypeHints(String missingType, ASTNode problemNode) {
+        List<EditorHints.Hint> hints = new ArrayList<>();
+
+        ASTNode grandparent = problemNode.getParent().getParent();
+        if (!(grandparent instanceof VariableDeclarationStatement)) {
+            return Collections.emptyList();
+        }
+
+        // All variables in the statement will be the same type, so use the first as an example
+        VariableDeclarationStatement varStatement = (VariableDeclarationStatement) problemNode.getParent().getParent();
+        VariableDeclarationFragment firstVar = (VariableDeclarationFragment) varStatement.fragments().get(0);
+
+        String varName = firstVar.getName().toString();
+        String problemTitle = "You are trying to declare a variable of type "
+        + missingType + ", which Processing does not recognize.";
+
+        // Suggest fixing a typo in the type name
+        JavaHint fixTypo = new JavaHint(problemTitle,
+                "You may need to correct the name of " + missingType
+                        + " if you mistyped it."
+        );
+        fixTypo.addBadCode(getDemoDeclaration(missingType, varName));
+        fixTypo.addGoodCode(getDemoDeclaration("CorrectName", varName));
+        hints.add(fixTypo);
+
+        // Suggest importing the class from library
+        JavaHint importLib = new JavaHint(problemTitle,
+                "You may need to correct the name of " + missingType
+                        + " if you mistyped it."
+        );
+        importLib.addBadCode(getDemoDeclaration(missingType, varName));
+        importLib.addGoodCode("import path.to.library." + missingType + ";\n"
+                + getDemoDeclaration(missingType, varName));
+        hints.add(importLib);
+
+        // Suggest importing the class from another file
+        JavaHint importFile = new JavaHint(problemTitle,
+                "You may need to correct the name of " + missingType
+                        + " if you mistyped it."
+        );
+        importFile.addBadCode(getDemoDeclaration(missingType, varName));
+        importFile.addGoodCode("import OtherFile." + missingType + ";\n"
+                + getDemoDeclaration(missingType, varName));
+        hints.add(importFile);
+
+        // Suggest creating the class
+        JavaHint createClass = new JavaHint(problemTitle,
+                "You may need to correct the name of " + missingType
+                        + " if you mistyped it."
+        );
+        createClass.addBadCode(getDemoDeclaration(missingType, varName));
+        createClass.addGoodCode("class " + missingType + " {\n  ...\n}\n"
+                + getDemoDeclaration(missingType, varName));
+        hints.add(createClass);
 
         return hints;
     }
