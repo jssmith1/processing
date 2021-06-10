@@ -2,6 +2,7 @@ package processing.mode.java.pdex;
 
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.ArrayAccess;
 import org.eclipse.jdt.core.dom.ArrayCreation;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ITypeBinding;
@@ -57,6 +58,8 @@ public class JavaHint implements EditorHints.Hint {
                 return getTypeMismatchHints(providedType, requiredType, problemNode);
             case IProblem.UndefinedType:
                 return getMissingTypeHints(problemArguments[0], problemNode);
+            case IProblem.UnresolvedVariable:
+                return getMissingVarHints(problemArguments[0], problemNode);
         }
 
         return Collections.emptyList();
@@ -470,6 +473,96 @@ public class JavaHint implements EditorHints.Hint {
         createClass.addGoodCode("class " + missingType + " {\n  ...\n}\n"
                 + getDemoDeclaration(missingType, varName));
         hints.add(createClass);
+
+        return hints;
+    }
+
+    private static List<EditorHints.Hint> getMissingVarHints(String varName, ASTNode problemNode) {
+        List<EditorHints.Hint> hints = new ArrayList<>();
+
+        String problemTitle = "You are trying to use a variable named "
+                + varName + " that does not exist yet.";
+
+        ASTNode parent = problemNode.getParent();
+
+        if (parent instanceof MethodInvocation) {
+            MethodInvocation invoc = (MethodInvocation) parent;
+            List<String> requiredParamTypes = Arrays.stream(
+                    invoc.resolveMethodBinding().getParameterTypes()
+            ).map(ITypeBinding::getName).collect(Collectors.toList());
+            List<String> providedParams = ((List<?>) invoc.arguments()).stream()
+                    .map(Object::toString).collect(Collectors.toList());
+
+            String varType = requiredParamTypes.get(providedParams.indexOf(varName));
+            String varDec = getDemoDeclaration(varType, varName);
+            String varUse = invoc + ";";
+
+            // Suggest adding declaration
+            JavaHint addDec = new JavaHint(problemTitle,
+                    "You may need to add variable declaration for " + varName
+                            + " before its first occurrence in the code."
+            );
+            addDec.addBadCode(varUse);
+            addDec.addGoodCode(varDec
+                    + "\n" + varUse);
+            hints.add(addDec);
+
+            // Suggest fixing typo
+            JavaHint fixName = new JavaHint(problemTitle,
+                    "You may need to change " + varName
+                            + " to a variable name that you have defined."
+            );
+            fixName.addBadCode(getDemoDeclaration(varType, "correctName")
+                    + "\n" + varUse);
+            fixName.addGoodCode(getDemoDeclaration(varType, "correctName")
+                    + "\n" + varUse.replaceAll("\\b" + varName + "\\b", "correctName"));
+            hints.add(fixName);
+
+            // Suggest moving to same function
+            JavaHint moveToSameFxn = new JavaHint(problemTitle,
+                    "You may need to move " + varName
+                            + " to the same function as its declaration."
+            );
+            moveToSameFxn.addBadCode("void setup() {\n  " + varDec + "\n}\n"
+                    + "void draw {\n  " + varUse + "\n}");
+            moveToSameFxn.addGoodCode("void draw() {\n  " + varDec + "\n"
+                    + "  " + varUse + "\n}");
+            hints.add(moveToSameFxn);
+
+            // Suggest moving to same or smaller scope
+            JavaHint moveToScope = new JavaHint(problemTitle,
+                    "You may need to move " + varName
+                            + " to the same or smaller scope as its declaration."
+            );
+            moveToScope.addBadCode("while (...) {\n  " + varDec + "\n}\n" + varUse);
+            moveToScope.addBadCode("void setup() {\n  " + varDec + "\n}\n"
+                    + "void draw {\n  " + varUse + "\n}");
+            moveToScope.addGoodCode("while (...) {\n  " + varDec + "\n  " + varUse + "\n}");
+            moveToScope.addGoodCode(varDec + "\nvoid draw() {\n  ...\n"
+                    + "  " + varUse + "\n}");
+            hints.add(moveToScope);
+
+        } else if (parent instanceof ArrayAccess && parent.getParent() instanceof VariableDeclarationFragment) {
+
+            ArrayAccess arrAccess = (ArrayAccess) parent;
+            String length = arrAccess.getIndex().toString();
+
+            // The "varName" is actually the declared type when an array is being created
+            VariableDeclarationFragment declaration = (VariableDeclarationFragment)
+                    parent.getParent();
+            String arrName = declaration.getName().toString();
+
+            // Suggest adding "new" to an array declaration
+            JavaHint addNewToArrDec = new JavaHint(problemTitle,
+                    "You may have missed the word \"new\" when creating an array."
+            );
+            addNewToArrDec.addBadCode(varName + "[] " + arrName
+                    + " = " + varName + "[" + length + "];");
+            addNewToArrDec.addGoodCode(varName + "[] " + arrName
+                    + " = new " + varName + "[" + length + "];");
+            hints.add(addNewToArrDec);
+
+        }
 
         return hints;
     }
