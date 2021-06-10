@@ -3,11 +3,10 @@ package processing.mode.java.pdex;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ArrayCreation;
-import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
-import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import processing.app.ui.EditorHints;
 
@@ -47,6 +46,8 @@ public class JavaHint implements EditorHints.Hint {
                 return getTwoInitializerArrHints(problemNode);
             case IProblem.UndefinedMethod:
                 return getMissingMethodHints(problemNode);
+            case IProblem.ShouldReturnValue:
+                return getMissingReturnHints(problemNode);
             case IProblem.ParameterMismatch:
                 return getParamMismatchHints(problemNode);
             case IProblem.TypeMismatch:
@@ -287,6 +288,70 @@ public class JavaHint implements EditorHints.Hint {
             hints.add(changeNumDefParams);
 
         }
+
+        return hints;
+    }
+
+    private static List<EditorHints.Hint> getMissingReturnHints(ASTNode problemNode) {
+        List<EditorHints.Hint> hints = new ArrayList<>();
+
+        MethodDeclaration invoc = (MethodDeclaration) problemNode.getParent();
+        List<String> requiredParamTypes = Arrays.stream(
+                invoc.resolveBinding().getParameterTypes()
+        ).map(ITypeBinding::getName).collect(Collectors.toList());
+        String methodName = invoc.getName().toString();
+        String methodReturnType = invoc.getReturnType2().toString();
+        String methodDec = getMethodDec(methodName, methodReturnType, requiredParamTypes);
+        String nameWithParens = methodName + "()";
+
+        String problemTitle = "You did not return a value of type " + methodReturnType
+                + " like the definition of method " + nameWithParens + ".";
+
+        // Suggest adding return at end
+        JavaHint returnEnd = new JavaHint(problemTitle,
+                "You may need to add a return statement of type " + methodReturnType
+                        + " at the end of the method " + nameWithParens + "."
+        );
+        returnEnd.addBadCode(methodDec + " {\n"
+                + "  ...\n"
+                + "}");
+        returnEnd.addGoodCode(methodDec + " {\n"
+                + "  ...\n"
+                + "  return " + getDemoValue(methodReturnType) + ";\n"
+                + "}");
+        hints.add(returnEnd);
+
+        // Suggest adding return in all branches
+        JavaHint returnBranch = new JavaHint(problemTitle,
+                "Make sure all branches of conditionals in " + nameWithParens
+                + " return a value of type " + methodReturnType + "."
+        );
+        returnBranch.addBadCode(methodDec + " {\n"
+                + "  if (...) {\n"
+                + "    ...\n"
+                + "    return " + getDemoValue(methodReturnType) + ";\n"
+                + "  } else {\n"
+                + "    ...\n"
+                + "  }\n"
+                + "}");
+        returnBranch.addGoodCode(methodDec + " {\n"
+                + "  if (...) {\n"
+                + "    ...\n"
+                + "    return " + getDemoValue(methodReturnType) + ";\n"
+                + "  } else {\n"
+                + "    ...\n"
+                + "    return " + getDemoValue(methodReturnType) + ";\n"
+                + "  }\n"
+                + "}");
+        returnBranch.addGoodCode(methodDec + " {\n"
+                + "  if (...) {\n"
+                + "    ...\n"
+                + "    return " + getDemoValue(methodReturnType) + ";\n"
+                + "  } \n"
+                + "  ...\n"
+                + "  return " + getDemoValue(methodReturnType) + ";\n"
+                + "}");
+        hints.add(returnBranch);
 
         return hints;
     }
