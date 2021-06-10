@@ -3,9 +3,11 @@ package processing.mode.java.pdex;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ArrayCreation;
+import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import processing.app.ui.EditorHints;
 
@@ -168,6 +170,40 @@ public class JavaHint implements EditorHints.Hint {
                 + "  ...\n"
                 + "}");
         hints.add(useDeclarationName);
+
+        // Suggest calling method on object
+        JavaHint callOnObj = new JavaHint(problemTitle,
+                "You may need to create an object of a class "
+                        + "and call the method " + nameWithParens + " on it."
+        );
+        callOnObj.addBadCode("class YourClass {\n  "
+                + getMethodDec(methodName, dummyReturnType, providedParamTypes) + " {\n"
+                + "    ...\n"
+                + "  }\n}\n"
+                + currMethodCall + ";");
+        callOnObj.addGoodCode("class YourClass {\n  "
+                + getMethodDec(methodName, dummyReturnType, providedParamTypes) + " {\n"
+                + "    ...\n"
+                + "  }\n}\n"
+                + getDemoDeclaration("YourClass", "myObject")
+                + "\nmyObject." + currMethodCall + ";");
+        hints.add(callOnObj);
+
+        // Suggest creating class method
+        JavaHint createClassMethod = new JavaHint(problemTitle,
+                "You may need to create the method "
+                        + nameWithParens + " in a class."
+        );
+        createClassMethod.addBadCode("class YourClass {\n}\n"
+                + getDemoDeclaration("YourClass", "myObject")
+                + "\nmyObject." + currMethodCall + ";");
+        createClassMethod.addGoodCode("class YourClass {\n  "
+                + getMethodDec(methodName, dummyReturnType, providedParamTypes) + " {\n"
+                + "    ...\n"
+                + "  }\n}\n"
+                + getDemoDeclaration("YourClass", "myObject")
+                + "\nmyObject." + currMethodCall + ";");
+        hints.add(createClassMethod);
 
         return hints;
     }
