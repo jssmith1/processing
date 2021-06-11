@@ -148,6 +148,8 @@ public class EditorHints extends JScrollPane {
         JTextArea textArea = new JTextArea(example);
         textArea.setEditable(false);
         textArea.setBorder(BorderFactory.createCompoundBorder(border, EMPTY_SPACING));
+        textArea.setLineWrap(true);
+        textArea.setWrapStyleWord(true);
         parent.add(textArea);
     }
 
