@@ -6,9 +6,9 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EditorHints extends JScrollPane {
+public class EditorHints extends JPanel {
     private static final Border EMPTY_SPACING = BorderFactory.createEmptyBorder(
-            8, 8, 8, 8
+            10, 10, 10, 10
     );
     private static final Border GREEN_BORDER = BorderFactory.createLineBorder(
             new Color(71, 151, 97), 2
@@ -19,6 +19,7 @@ public class EditorHints extends JScrollPane {
 
     private final List<Hint> HINTS;
 
+    private final JScrollPane SCROLL_PANE;
     private final JLabel PROBLEM_TITLE_LABEL;
     private final JLabel SUGGESTION_TITLE_LABEL;
     private final JLabel SUGGESTION_COUNTER;
@@ -28,16 +29,13 @@ public class EditorHints extends JScrollPane {
 
     private int hintIndex;
 
-    public EditorHints() {
+    public EditorHints(JScrollPane scrollPane) {
         HINTS = new ArrayList<>();
 
-        setBorder(BorderFactory.createEmptyBorder());
+        SCROLL_PANE = scrollPane;
 
-        // Create the panel
-        JPanel panel = new JPanel();
-        panel.setLayout(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder());
-        setViewportView(panel);
+        setLayout(new BorderLayout());
+        setBorder(EMPTY_SPACING);
 
         // Create title labels
         PROBLEM_TITLE_LABEL = new JLabel();
@@ -82,9 +80,9 @@ public class EditorHints extends JScrollPane {
         NAV_BOX.add(Box.createHorizontalGlue());
         NAV_BOX.add(navButton);
 
-        panel.add(headerBox, BorderLayout.NORTH);
-        panel.add(codeBox, BorderLayout.CENTER);
-        panel.add(NAV_BOX, BorderLayout.SOUTH);
+        add(headerBox, BorderLayout.NORTH);
+        add(codeBox, BorderLayout.CENTER);
+        add(NAV_BOX, BorderLayout.SOUTH);
 
         clear();
     }
@@ -137,9 +135,8 @@ public class EditorHints extends JScrollPane {
             addCodeBox(goodCode, GOOD_CODE_BOX, GREEN_BORDER);
         }
 
-        // Scroll to the top so user sees suggestion title
-        scrollRectToVisible(PROBLEM_TITLE_LABEL.getBounds());
-
+        JScrollBar verticalScrollBar = SCROLL_PANE.getVerticalScrollBar();
+        verticalScrollBar.setValue(verticalScrollBar.getMinimum());
     }
 
     private void addCodeBox(String example, JComponent parent, Border border) {

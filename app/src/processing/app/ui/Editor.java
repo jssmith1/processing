@@ -447,8 +447,7 @@ public abstract class Editor extends JFrame implements RunnerListener {
 
   public void addEditorHints(EditorFooter footer) {
     JScrollPane scrollPane = new JScrollPane();
-    editorHints = new EditorHints();
-    scrollPane.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+    editorHints = new EditorHints(scrollPane);
     scrollPane.setViewportView(editorHints);
     footer.addPanel(scrollPane, "Hints", "/lib/footer/error");
   }
