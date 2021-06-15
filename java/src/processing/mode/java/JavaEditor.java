@@ -18,6 +18,7 @@ import javax.swing.text.Document;
 
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
+import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebView;
 import processing.core.PApplet;
 import processing.data.StringList;
@@ -185,9 +186,7 @@ public class JavaEditor extends Editor {
       embedPanel.setScene(new Scene(webView));
     });
 
-    JPanel container = new JPanel();
-    container.add(embedPanel);
-    footer.addPanel(container, "Hints", "/lib/footer/error");
+    footer.addPanel(embedPanel, "Hints", "/lib/footer/error");
   }
 
   @Override
