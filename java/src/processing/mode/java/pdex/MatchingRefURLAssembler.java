@@ -11,6 +11,7 @@ import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -24,12 +25,12 @@ public class MatchingRefURLAssembler {
      * @param problemNode       node of the AST where the problem occurred
      * @return the path and parameters for the corresponding MatchingRef page
      */
-    public String getArrDimURL(ASTNode problemNode) {
+    public Optional<String> getArrDimURL(ASTNode problemNode) {
         String arrType = problemNode.toString();
         String arrName = ((VariableDeclarationFragment) problemNode.getParent().getParent().getParent())
                 .getName().toString();
 
-        return "incorrectdimensionexpression1?typename=" + arrType;
+        return Optional.of("incorrectdimensionexpression1?typename=" + arrType);
     }
 
     /**
@@ -37,12 +38,12 @@ public class MatchingRefURLAssembler {
      * @param problemNode       node of the AST where the problem occurred
      * @return the path and parameters for the corresponding MatchingRef page
      */
-    public String getTwoDimArrURL(ASTNode problemNode) {
+    public Optional<String> getTwoDimArrURL(ASTNode problemNode) {
         String arrType = ((ArrayCreation) problemNode.getParent()).getType().getElementType().toString();
         String arrName = ((VariableDeclarationFragment) problemNode.getParent().getParent())
                 .getName().toString();
 
-        return "incorrectdimensionexpression2?typename=" + arrType;
+        return Optional.of("incorrectdimensionexpression2?typename=" + arrType);
     }
 
     /**
@@ -50,12 +51,12 @@ public class MatchingRefURLAssembler {
      * @param problemNode       node of the AST where the problem occurred
      * @return the path and parameters for the corresponding MatchingRef page
      */
-    public String getTwoInitializerArrURL(ASTNode problemNode) {
+    public Optional<String> getTwoInitializerArrURL(ASTNode problemNode) {
         String arrType = ((ArrayCreation) problemNode.getParent()).getType().getElementType().toString();
         String arrName = ((VariableDeclarationFragment) problemNode.getParent().getParent())
                 .getName().toString();
 
-        return "incorrectdimensionexpression3?typename=" + arrType;
+        return Optional.of("incorrectdimensionexpression3?typename=" + arrType);
     }
 
     /**
@@ -63,7 +64,7 @@ public class MatchingRefURLAssembler {
      * @param problemNode       node of the AST where the problem occurred
      * @return the path and parameters for the corresponding MatchingRef page
      */
-    public String getMissingMethodURL(ASTNode problemNode) {
+    public Optional<String> getMissingMethodURL(ASTNode problemNode) {
         MethodInvocation invoc = (MethodInvocation) problemNode.getParent();
         List<String> providedParams = ((List<?>) invoc.arguments()).stream()
                 .map(Object::toString).collect(Collectors.toList());
@@ -77,9 +78,9 @@ public class MatchingRefURLAssembler {
         String dummyReturnType = "int";
         String dummyCorrectName = "correctName";
 
-        return "methodnotfound?methodname=" + methodName
+        return Optional.of("methodnotfound?methodname=" + methodName
                 + "&correctmethodname=" + dummyCorrectName
-                + "&typename=" + dummyReturnType;
+                + "&typename=" + dummyReturnType);
     }
 
     /**
@@ -87,7 +88,7 @@ public class MatchingRefURLAssembler {
      * @param problemNode       node of the AST where the problem occurred
      * @return the path and parameters for the corresponding MatchingRef page
      */
-    public String getParamMismatchURL(ASTNode problemNode) {
+    public Optional<String> getParamMismatchURL(ASTNode problemNode) {
         MethodInvocation invoc = (MethodInvocation) problemNode.getParent();
         List<String> providedParams = ((List<?>) invoc.arguments()).stream()
                 .map(Object::toString).collect(Collectors.toList());
@@ -101,9 +102,9 @@ public class MatchingRefURLAssembler {
         String methodName = invoc.getName().toString();
         String methodReturnType = invoc.resolveMethodBinding().getReturnType().toString();
 
-        return "parametermismatch?methodname=" + methodName
+        return Optional.of("parametermismatch?methodname=" + methodName
                 + "&methodtypename=" + methodReturnType
-                + "&typeonename=int&typetwoname=String";
+                + "&typeonename=int&typetwoname=String");
     }
 
     /**
@@ -111,7 +112,7 @@ public class MatchingRefURLAssembler {
      * @param problemNode       node of the AST where the problem occurred
      * @return the path and parameters for the corresponding MatchingRef page
      */
-    public String getMissingReturnURL(ASTNode problemNode) {
+    public Optional<String> getMissingReturnURL(ASTNode problemNode) {
         MethodDeclaration invoc = (MethodDeclaration) problemNode.getParent();
         List<String> requiredParamTypes = Arrays.stream(
                 invoc.resolveBinding().getParameterTypes()
@@ -119,8 +120,8 @@ public class MatchingRefURLAssembler {
         String methodName = invoc.getName().toString();
         String methodReturnType = invoc.getReturnType2().toString();
 
-        return "returnmissing?methodname=" + methodName
-                + "&typename=" + methodReturnType;
+        return Optional.of("returnmissing?methodname=" + methodName
+                + "&typename=" + methodReturnType);
     }
 
     /**
@@ -128,12 +129,12 @@ public class MatchingRefURLAssembler {
      * @param problemNode       node of the AST where the problem occurred
      * @return the path and parameters for the corresponding MatchingRef page
      */
-    public String getTypeMismatchURL(String providedType, String requiredType, ASTNode problemNode) {
+    public Optional<String> getTypeMismatchURL(String providedType, String requiredType, ASTNode problemNode) {
         String varName = ((VariableDeclarationFragment) problemNode.getParent()).getName().toString();
 
-        return "typemismatch?typeonename=" + providedType
+        return Optional.of("typemismatch?typeonename=" + providedType
                 + "&typetwoname=" + requiredType
-                + "&varname=" + varName;
+                + "&varname=" + varName);
     }
 
     /**
@@ -141,18 +142,26 @@ public class MatchingRefURLAssembler {
      * @param problemNode       node of the AST where the problem occurred
      * @return the path and parameters for the corresponding MatchingRef page
      */
-    public String getMissingTypeURL(String missingType, ASTNode problemNode) {
+    public Optional<String> getMissingTypeURL(String missingType, ASTNode problemNode) {
+        ASTNode grandparent = problemNode.getParent().getParent();
 
         // All variables in the statement will be the same type, so use the first as an example
-        VariableDeclarationStatement varStatement = (VariableDeclarationStatement) problemNode.getParent().getParent();
-        VariableDeclarationFragment firstVar = (VariableDeclarationFragment) varStatement.fragments().get(0);
+        VariableDeclarationFragment firstVar;
+        if (grandparent instanceof VariableDeclarationStatement) {
+            VariableDeclarationStatement varStatement = (VariableDeclarationStatement) grandparent;
+            firstVar = (VariableDeclarationFragment) varStatement.fragments().get(0);
+        } else if (grandparent.getParent() instanceof VariableDeclarationFragment) {
+            firstVar = (VariableDeclarationFragment) grandparent.getParent();
+        } else {
+            return Optional.empty();
+        }
 
         String varName = firstVar.getName().toString();
         String dummyCorrectName = "CorrectName";
 
-        return "typenotfound?classname=" + missingType
+        return Optional.of("typenotfound?classname=" + missingType
                 + "&correctclassname=" + dummyCorrectName
-                + "&varname=" + varName;
+                + "&varname=" + varName);
     }
 
 }

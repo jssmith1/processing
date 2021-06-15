@@ -27,6 +27,7 @@ import processing.app.ui.EditorHints;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 
 /**
@@ -74,6 +75,7 @@ public class JavaProblem implements Problem {
     this.type = type;
     this.tabIndex = tabIndex;
     this.lineNumber = lineNumber;
+    this.matchingRefUrl = "";
   }
 
   /**
@@ -144,12 +146,12 @@ public class JavaProblem implements Problem {
   }
 
   @Override
-  public String getMatchingRefUrl() {
+  public String getMatchingRefURL() {
     return matchingRefUrl;
   }
 
   @Override
-  public void setMatchingRefUrl(String url) {
+  public void setMatchingRefURL(String url) {
     matchingRefUrl = url;
   }
 

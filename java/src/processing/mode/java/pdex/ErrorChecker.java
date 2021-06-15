@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -25,13 +26,9 @@ import com.google.classpath.ClassPathFactory;
 import com.google.classpath.RegExpResourceFilter;
 
 import org.eclipse.jdt.core.dom.ASTNode;
-import org.eclipse.jdt.core.dom.MethodDeclaration;
-import org.eclipse.jdt.core.dom.NumberLiteral;
-import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import processing.app.Language;
 import processing.app.Problem;
-import processing.app.ui.EditorHints;
 import processing.mode.java.JavaEditor;
 import processing.mode.java.JavaMode;
 import processing.mode.java.pdex.PreprocessedSketch.SketchInterval;
@@ -163,13 +160,16 @@ class ErrorChecker {
       int line = ps.tabOffsetToTabLine(in.tabIndex, in.startTabOffset);
       JavaProblem p = JavaProblem.fromIProblem(iproblem, in.tabIndex, line, badCode);
       p.setPDEOffsets(in.startTabOffset, in.stopTabOffset);
-      p.setMatchingRefUrl(getMatchingRefUrl(iproblem, ps.compilationUnit));
+
+      Optional<String> matchingRefPath = getMatchingRefPath(iproblem, ps.compilationUnit);
+      final String URL = "http://139.147.9.247/";
+      matchingRefPath.ifPresent((path) -> p.setMatchingRefURL(URL + path));
       return p;
     }
     return null;
   }
 
-  static private String getMatchingRefUrl(IProblem compilerError, ASTNode ast) {
+  static private Optional<String> getMatchingRefPath(IProblem compilerError, ASTNode ast) {
     String[] problemArguments = compilerError.getArguments();
     ASTNode problemNode = ASTUtils.getASTNodeAt(
             ast,
@@ -177,47 +177,32 @@ class ErrorChecker {
             compilerError.getSourceEnd()
     );
 
-    String url = "http://139.147.9.247/";
     MatchingRefURLAssembler urlAssembler = new MatchingRefURLAssembler();
 
     switch (compilerError.getID()) {
       case IProblem.MustDefineEitherDimensionExpressionsOrInitializer:
-        url += urlAssembler.getArrDimURL(problemNode);
-        break;
+        return urlAssembler.getArrDimURL(problemNode);
       case IProblem.IllegalDimension:
-        url += urlAssembler.getTwoDimArrURL(problemNode);
-        break;
+        return urlAssembler.getTwoDimArrURL(problemNode);
       case IProblem.CannotDefineDimensionExpressionsWithInit:
-        url += urlAssembler.getTwoInitializerArrURL(problemNode);
-        break;
+        return urlAssembler.getTwoInitializerArrURL(problemNode);
       case IProblem.UndefinedMethod:
-        url += urlAssembler.getMissingMethodURL(problemNode);
-        break;
+        return urlAssembler.getMissingMethodURL(problemNode);
       case IProblem.ParameterMismatch:
-        url += urlAssembler.getParamMismatchURL(problemNode);
-        break;
+        return urlAssembler.getParamMismatchURL(problemNode);
       case IProblem.ShouldReturnValue:
-        url += urlAssembler.getMissingReturnURL(problemNode);
-        break;
+        return urlAssembler.getMissingReturnURL(problemNode);
       case IProblem.TypeMismatch:
         String providedType = truncateClass(problemArguments[0]);
         String requiredType = truncateClass(problemArguments[1]);
-        url += urlAssembler.getTypeMismatchURL(providedType, requiredType, problemNode);
-        break;
+        return urlAssembler.getTypeMismatchURL(providedType, requiredType, problemNode);
       case IProblem.UndefinedType:
-
-        // This code occurs twice for the same error but with different AST locations
-        if (!(problemNode.getParent().getParent() instanceof VariableDeclarationStatement)) {
-          return "";
-        }
-
-        url += urlAssembler.getMissingTypeURL(problemArguments[0], problemNode);
-        break;
+        return urlAssembler.getMissingTypeURL(problemArguments[0], problemNode);
       case IProblem.UnresolvedVariable:
-        return url;//getMissingVarHints(problemArguments[0], problemNode);
+        return Optional.empty();//getMissingVarHints(problemArguments[0], problemNode);
     }
 
-    return url;
+    return Optional.empty();
   }
 
   private static String truncateClass(String qualifiedName) {

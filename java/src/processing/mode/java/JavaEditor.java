@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -18,7 +19,6 @@ import javax.swing.text.Document;
 
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
-import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebView;
 import processing.core.PApplet;
 import processing.data.StringList;
@@ -1305,7 +1305,9 @@ public class JavaEditor extends Editor {
 
     javafx.application.Platform.runLater(() -> {
       if (webView != null && currentProblem != null) {
-        webView.getEngine().load(currentProblem.getMatchingRefUrl());
+        webView.getEngine().load(currentProblem.getMatchingRefURL());
+      } else if (webView != null) {
+        webView.getEngine().load("");
       }
     });
 
