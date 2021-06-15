@@ -26,7 +26,6 @@ import com.google.classpath.ClassPathFactory;
 import com.google.classpath.RegExpResourceFilter;
 
 import org.eclipse.jdt.core.dom.ASTNode;
-import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import processing.app.Language;
 import processing.app.Problem;
 import processing.mode.java.JavaEditor;
@@ -181,25 +180,25 @@ class ErrorChecker {
 
     switch (compilerError.getID()) {
       case IProblem.MustDefineEitherDimensionExpressionsOrInitializer:
-        return urlAssembler.getArrDimURL(problemNode);
+        return urlAssembler.getArrDimPath(problemNode);
       case IProblem.IllegalDimension:
-        return urlAssembler.getTwoDimArrURL(problemNode);
+        return urlAssembler.getTwoDimArrPath(problemNode);
       case IProblem.CannotDefineDimensionExpressionsWithInit:
-        return urlAssembler.getTwoInitializerArrURL(problemNode);
+        return urlAssembler.getTwoInitializerArrPath(problemNode);
       case IProblem.UndefinedMethod:
-        return urlAssembler.getMissingMethodURL(problemNode);
+        return urlAssembler.getMissingMethodPath(problemNode);
       case IProblem.ParameterMismatch:
-        return urlAssembler.getParamMismatchURL(problemNode);
+        return urlAssembler.getParamMismatchPath(problemNode);
       case IProblem.ShouldReturnValue:
-        return urlAssembler.getMissingReturnURL(problemNode);
+        return urlAssembler.getMissingReturnPath(problemNode);
       case IProblem.TypeMismatch:
         String providedType = truncateClass(problemArguments[0]);
         String requiredType = truncateClass(problemArguments[1]);
-        return urlAssembler.getTypeMismatchURL(providedType, requiredType, problemNode);
+        return urlAssembler.getTypeMismatchPath(providedType, requiredType, problemNode);
       case IProblem.UndefinedType:
-        return urlAssembler.getMissingTypeURL(problemArguments[0], problemNode);
+        return urlAssembler.getMissingTypePath(problemArguments[0], problemNode);
       case IProblem.UnresolvedVariable:
-        return Optional.empty();//getMissingVarHints(problemArguments[0], problemNode);
+        return urlAssembler.getMissingVarPath(problemArguments[0], problemNode);
     }
 
     return Optional.empty();
