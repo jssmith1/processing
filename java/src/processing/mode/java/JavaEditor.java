@@ -16,6 +16,9 @@ import javax.swing.event.*;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
+import javafx.embed.swing.JFXPanel;
+import javafx.scene.Scene;
+import javafx.scene.web.WebView;
 import processing.core.PApplet;
 import processing.data.StringList;
 import processing.app.*;
@@ -69,6 +72,8 @@ public class JavaEditor extends Editor {
 
   private boolean hasJavaTabs;
   private boolean javaTabWarned;
+
+  private WebView webView;
 
   protected PreprocessingService preprocessingService;
   protected PDEX pdex;
@@ -172,6 +177,18 @@ public class JavaEditor extends Editor {
     };
   }
 
+  public void addEditorHints(EditorFooter footer) {
+    JFXPanel embedPanel = new JFXPanel();
+
+    javafx.application.Platform.runLater(() -> {
+      webView = new WebView();
+      embedPanel.setScene(new Scene(webView));
+    });
+
+    JPanel container = new JPanel();
+    container.add(embedPanel);
+    footer.addPanel(container, "Hints", "/lib/footer/error");
+  }
 
   @Override
   public EditorFooter createFooter() {
@@ -1282,6 +1299,19 @@ public class JavaEditor extends Editor {
     preprocessingService.notifySketchChanged();
   }
 
+
+  @Override
+  public Problem updateEditorStatus() {
+    Problem currentProblem = super.updateEditorStatus();
+
+    javafx.application.Platform.runLater(() -> {
+      if (webView != null && currentProblem != null) {
+        webView.getEngine().load(currentProblem.getMatchingRefUrl());
+      }
+    });
+
+    return currentProblem;
+  }
 
   public void statusError(String what) {
     super.statusError(what);

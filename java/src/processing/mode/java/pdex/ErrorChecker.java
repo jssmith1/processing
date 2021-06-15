@@ -132,11 +132,6 @@ class ErrorChecker {
               p.setImportSuggestions(s);
             }
 
-            // Create hints
-            if (p != null) {
-              p.setHints(JavaHint.fromIProblem(iproblem, ps.compilationUnit));
-            }
-
             return p;
           })
           .filter(Objects::nonNull)
@@ -168,9 +163,56 @@ class ErrorChecker {
       int line = ps.tabOffsetToTabLine(in.tabIndex, in.startTabOffset);
       JavaProblem p = JavaProblem.fromIProblem(iproblem, in.tabIndex, line, badCode);
       p.setPDEOffsets(in.startTabOffset, in.stopTabOffset);
+      p.setMatchingRefUrl(getMatchingRefUrl(iproblem, ps.compilationUnit));
       return p;
     }
     return null;
+  }
+
+  static private String getMatchingRefUrl(IProblem compilerError, ASTNode ast) {
+    String[] problemArguments = compilerError.getArguments();
+    ASTNode problemNode = ASTUtils.getASTNodeAt(
+            ast,
+            compilerError.getSourceStart(),
+            compilerError.getSourceEnd()
+    );
+
+    String url = "http://139.147.9.247/";
+
+    switch (compilerError.getID()) {
+      case IProblem.MustDefineEitherDimensionExpressionsOrInitializer:
+        return url;//getArrDimHints(problemNode);
+      case IProblem.IllegalDimension:
+        return url;//getTwoDimArrHints(problemNode);
+      case IProblem.CannotDefineDimensionExpressionsWithInit:
+        return url;//getTwoInitializerArrHints(problemNode);
+      case IProblem.UndefinedMethod:
+        return url;//getMissingMethodHints(problemNode);
+      case IProblem.ParameterMismatch:
+        return url;//getParamMismatchHints(problemNode);
+      case IProblem.ShouldReturnValue:
+        return url;//getMissingReturnHints(problemNode);
+      case IProblem.TypeMismatch:
+        String providedType = truncateClass(problemArguments[0]);
+        String requiredType = truncateClass(problemArguments[1]);
+        return url;//getTypeMismatchHints(providedType, requiredType, problemNode);
+      case IProblem.UndefinedType:
+        return url;//getMissingTypeHints(problemArguments[0], problemNode);
+      case IProblem.UnresolvedVariable:
+        return url;//getMissingVarHints(problemArguments[0], problemNode);
+    }
+
+    return url;
+  }
+
+  private static String truncateClass(String qualifiedName) {
+    int lastPeriodIndex = qualifiedName.lastIndexOf('.');
+
+    if (lastPeriodIndex == -1) {
+      return qualifiedName;
+    }
+
+    return qualifiedName.substring(lastPeriodIndex + 1);
   }
 
 
@@ -299,8 +341,6 @@ class ErrorChecker {
     if (missingBraceProblem != null) {
       JavaProblem p = convertIProblem(missingBraceProblem, ps);
       if (p != null) {
-        p.setHints(JavaHint.fromIProblem(missingBraceProblem, ps.compilationUnit));
-
         problems.clear();
         problems.add(p);
       }

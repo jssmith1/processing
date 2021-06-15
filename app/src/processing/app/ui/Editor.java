@@ -58,10 +58,10 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Stack;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import javax.swing.*;
@@ -116,7 +116,6 @@ public abstract class Editor extends JFrame implements RunnerListener {
   protected EditorFooter footer;
   protected EditorConsole console;
   protected ErrorTable errorTable;
-  protected EditorHints editorHints;
 
   // currently opened program
   protected Sketch sketch;
@@ -445,14 +444,6 @@ public abstract class Editor extends JFrame implements RunnerListener {
     ef.addPanel(scrollPane, Language.text("editor.footer.errors"), "/lib/footer/error");
   }
 
-  public void addEditorHints(EditorFooter footer) {
-    JScrollPane scrollPane = new JScrollPane();
-    editorHints = new EditorHints(scrollPane);
-    scrollPane.setViewportView(editorHints);
-    footer.addPanel(scrollPane, "Hints", "/lib/footer/error");
-  }
-
-
   public EditorState getEditorState() {
     return state;
   }
@@ -605,10 +596,6 @@ public abstract class Editor extends JFrame implements RunnerListener {
 
   public EditorConsole getConsole() {
     return console;
-  }
-
-  public EditorHints getEditorHints() {
-    return editorHints;
   }
 
 //  public Settings getTheme() {
@@ -3128,16 +3115,13 @@ public abstract class Editor extends JFrame implements RunnerListener {
    * Updates editor status bar, depending on whether the caret is on an error
    * line or not
    */
-  public void updateEditorStatus() {
+  public Problem updateEditorStatus() {
     Problem problem = findProblem(textarea.getCaretLine());
     if (problem != null) {
       int type = problem.isError() ?
         EditorStatus.CURSOR_LINE_ERROR : EditorStatus.CURSOR_LINE_WARNING;
       statusMessage(problem.getMessage(), type);
-      editorHints.setCurrentHints(problem.getHints());
     } else {
-      editorHints.clear();
-
       switch (getStatusMode()) {
         case EditorStatus.CURSOR_LINE_ERROR:
         case EditorStatus.CURSOR_LINE_WARNING:
@@ -3145,6 +3129,8 @@ public abstract class Editor extends JFrame implements RunnerListener {
           break;
       }
     }
+
+    return problem;
   }
 
 

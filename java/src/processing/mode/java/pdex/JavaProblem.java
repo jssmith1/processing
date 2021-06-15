@@ -65,7 +65,7 @@ public class JavaProblem implements Problem {
   /**
    * Common errors have code examples in a separate tab.
    */
-  private List<EditorHints.Hint> hints;
+  private String matchingRefUrl;
 
   public static final int ERROR = 1, WARNING = 2;
 
@@ -74,7 +74,6 @@ public class JavaProblem implements Problem {
     this.type = type;
     this.tabIndex = tabIndex;
     this.lineNumber = lineNumber;
-    hints = Collections.emptyList();
   }
 
   /**
@@ -145,13 +144,13 @@ public class JavaProblem implements Problem {
   }
 
   @Override
-  public List<EditorHints.Hint> getHints() {
-    return hints;
+  public String getMatchingRefUrl() {
+    return matchingRefUrl;
   }
 
   @Override
-  public void setHints(List<EditorHints.Hint> newHints) {
-    hints = newHints;
+  public void setMatchingRefUrl(String url) {
+    matchingRefUrl = url;
   }
 
   @Override

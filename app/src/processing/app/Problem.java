@@ -36,7 +36,7 @@ public interface Problem {
   public int getStartOffset();
   public int getStopOffset();
 
-  public List<EditorHints.Hint> getHints();
-  public void setHints(List<EditorHints.Hint> newHints);
+  public String getMatchingRefUrl();
+  public void setMatchingRefUrl(String url);
 }
 
