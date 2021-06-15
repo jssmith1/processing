@@ -178,26 +178,41 @@ class ErrorChecker {
     );
 
     String url = "http://139.147.9.247/";
+    MatchingRefURLAssembler urlAssembler = new MatchingRefURLAssembler();
 
     switch (compilerError.getID()) {
       case IProblem.MustDefineEitherDimensionExpressionsOrInitializer:
-        return url;//getArrDimHints(problemNode);
+        url += urlAssembler.getArrDimURL(problemNode);
+        break;
       case IProblem.IllegalDimension:
-        return url;//getTwoDimArrHints(problemNode);
+        url += urlAssembler.getTwoDimArrURL(problemNode);
+        break;
       case IProblem.CannotDefineDimensionExpressionsWithInit:
-        return url;//getTwoInitializerArrHints(problemNode);
+        url += urlAssembler.getTwoInitializerArrURL(problemNode);
+        break;
       case IProblem.UndefinedMethod:
-        return url;//getMissingMethodHints(problemNode);
+        url += urlAssembler.getMissingMethodURL(problemNode);
+        break;
       case IProblem.ParameterMismatch:
-        return url;//getParamMismatchHints(problemNode);
+        url += urlAssembler.getParamMismatchURL(problemNode);
+        break;
       case IProblem.ShouldReturnValue:
-        return url;//getMissingReturnHints(problemNode);
+        url += urlAssembler.getMissingReturnURL(problemNode);
+        break;
       case IProblem.TypeMismatch:
         String providedType = truncateClass(problemArguments[0]);
         String requiredType = truncateClass(problemArguments[1]);
-        return url;//getTypeMismatchHints(providedType, requiredType, problemNode);
+        url += urlAssembler.getTypeMismatchURL(providedType, requiredType, problemNode);
+        break;
       case IProblem.UndefinedType:
-        return url;//getMissingTypeHints(problemArguments[0], problemNode);
+
+        // This code occurs twice for the same error but with different AST locations
+        if (!(problemNode.getParent().getParent() instanceof VariableDeclarationStatement)) {
+          return "";
+        }
+
+        url += urlAssembler.getMissingTypeURL(problemArguments[0], problemNode);
+        break;
       case IProblem.UnresolvedVariable:
         return url;//getMissingVarHints(problemArguments[0], problemNode);
     }
