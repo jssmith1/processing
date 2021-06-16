@@ -186,7 +186,7 @@ public class JavaEditor extends Editor {
       embedPanel.setScene(new Scene(webView));
     });
 
-    footer.addPanel(embedPanel, "Hints", "/lib/footer/error");
+    footer.addPanel(embedPanel, "Hints", "/lib/footer/hint");
   }
 
   @Override
