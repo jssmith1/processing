@@ -2336,12 +2336,9 @@ public class JavaEditor extends Editor {
         message += " (double-click for suggestions)";
       }
 
-      int lineNumber = p.getLineNumber() + 1;
-
-      //EDIT AREA
-      errorTable.addRow(p, "Problem Line is: " + getLineText(lineNumber - 1) + " ",
+      errorTable.addRow(p, message,
                    sketch.getCode(jp.getTabIndex()).getPrettyName(),
-                   Integer.toString(lineNumber));
+                   Integer.toString(p.getLineNumber() + 1));
       // Added +1 because lineNumbers internally are 0-indexed
     }
   }

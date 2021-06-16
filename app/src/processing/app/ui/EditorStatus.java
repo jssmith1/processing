@@ -44,23 +44,12 @@ import processing.app.Mode;
 import processing.app.Platform;
 import processing.app.Preferences;
 import processing.core.PApplet;
-import processing.app.Problem;
-import processing.app.ErrorLineHandler;
-
-
-import com.github.javaparser.ast.*;
-import com.github.javaparser.StaticJavaParser;
-//import org.eclipse.jdt.core.dom.CompilationUnit;
-
-import java.util.*;
 
 
 /**
  * Panel just below the editing area that contains status messages.
  */
 public class EditorStatus extends BasicSplitPaneDivider {
-  //PreprocessingService test;
-
   static final int HIGH = Toolkit.zoom(28);
   static final int LEFT_MARGIN = Editor.LEFT_GUTTER;
   static final int RIGHT_MARGIN = Toolkit.zoom(20);
@@ -131,6 +120,7 @@ public class EditorStatus extends BasicSplitPaneDivider {
   boolean indeterminate;
   Thread thread;
 
+
   public EditorStatus(BasicSplitPaneUI ui, Editor editor) {
     super(ui);
     this.editor = editor;
@@ -146,23 +136,9 @@ public class EditorStatus extends BasicSplitPaneDivider {
 
       @Override
       public void mousePressed(MouseEvent e) {
-        //EDIT AREA
-        ErrorLineHandler test = new ErrorLineHandler(editor.getProblems());
-        int problemLineNumber = test.getProblemLineNumber();
-        test.handleLine(editor.getLineText(problemLineNumber));
-        String function = test.getProblemFunction();
-        String type = test.getProblemVariableType();
-        //test = new PreprocessingService(editor);
-
-        //JavaParser parser = new JavaParser();
-        CompilationUnit cu = StaticJavaParser.parse(editor.getText());
-        //ParserConfiguration configuration = new ParserConfiguration();
-        //JavaParser parser = new JavaParser(configuration);
-        //ParseResult parseResult = parser.parse(EXPRESSION, provider("1+1"));
-        //parseResult.getResult().ifPresent(System.out::println);
-
         if (rolloverState == ROLLOVER_URL) {
           Platform.openURL(url);
+
         } else if (rolloverState == ROLLOVER_CLIPBOARD) {
           if (e.isShiftDown()) {
             // open the text in a browser window as a search
@@ -170,28 +146,11 @@ public class EditorStatus extends BasicSplitPaneDivider {
             Platform.openURL(String.format(fmt, PApplet.urlEncode(message)));
 
           } else {
-            String link;
-            if(message.contains("This method must return a result of type")){
-                link = "http://139.147.9.247/returnmissing?methodname=" + function + "&typename=" + type;
-                Platform.openURL(link);
-            } else {
-                Platform.openURL("http://139.147.9.247/");
-            }
-
             // copy the text to the clipboard
             Clipboard clipboard = getToolkit().getSystemClipboard();
             clipboard.setContents(new StringSelection(message), null);
             System.out.println("Copied to the clipboard. " +
-                               "Use shift-click to search the web instead.");
-
-            System.out.println("Editor getText() is: " + editor.getText());
-            System.out.println("Editor getProblems() is: " + editor.getProblems());
-            System.out.println("Editor first problem line is: " + editor.getProblems().get(0).getLineNumber());
-
-            System.out.println("Problem line array should be: " + test.getProblemLine());
-            System.out.println("Problem variable type should be: " + type);
-            System.out.println("Problem function name should be: " + function);
-            //System.out.println("JavaParser: " + cu);
+                    "Use shift-click to search the web instead.");
           }
 
         } else if (rolloverState == ROLLOVER_COLLAPSE) {
@@ -224,6 +183,7 @@ public class EditorStatus extends BasicSplitPaneDivider {
     });
   }
 
+
   void setCollapsed(boolean newState) {
     if (collapsed != newState) {
       collapsed = newState;
@@ -235,16 +195,16 @@ public class EditorStatus extends BasicSplitPaneDivider {
 
   void updateMouse() {
     switch (rolloverState) {
-    case ROLLOVER_CLIPBOARD:
-    case ROLLOVER_URL:
-      setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      break;
-    case ROLLOVER_COLLAPSE:
-      setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-      break;
-    case ROLLOVER_NONE:
-      setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
-      break;
+      case ROLLOVER_CLIPBOARD:
+      case ROLLOVER_URL:
+        setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        break;
+      case ROLLOVER_COLLAPSE:
+        setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        break;
+      case ROLLOVER_NONE:
+        setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
+        break;
     }
     repaint();
   }
@@ -265,27 +225,27 @@ public class EditorStatus extends BasicSplitPaneDivider {
     urlColor = mode.getColor("status.url.fgcolor");
 
     fgColor = new Color[] {
-      mode.getColor("status.notice.fgcolor"),
-      mode.getColor("status.error.fgcolor"),
-      mode.getColor("status.error.fgcolor"),
-      mode.getColor("status.warning.fgcolor"),
-      mode.getColor("status.warning.fgcolor")
+            mode.getColor("status.notice.fgcolor"),
+            mode.getColor("status.error.fgcolor"),
+            mode.getColor("status.error.fgcolor"),
+            mode.getColor("status.warning.fgcolor"),
+            mode.getColor("status.warning.fgcolor")
     };
 
     bgColor = new Color[] {
-      mode.getColor("status.notice.bgcolor"),
-      mode.getColor("status.error.bgcolor"),
-      mode.getColor("status.error.bgcolor"),
-      mode.getColor("status.warning.bgcolor"),
-      mode.getColor("status.warning.bgcolor")
+            mode.getColor("status.notice.bgcolor"),
+            mode.getColor("status.error.bgcolor"),
+            mode.getColor("status.error.bgcolor"),
+            mode.getColor("status.warning.bgcolor"),
+            mode.getColor("status.warning.bgcolor")
     };
 
     bgImage = new Image[] {
-      mode.loadImage("/lib/status/notice.png"),
-      mode.loadImage("/lib/status/error.png"),
-      mode.loadImage("/lib/status/error.png"),
-      mode.loadImage("/lib/status/warning.png"),
-      mode.loadImage("/lib/status/warning.png")
+            mode.loadImage("/lib/status/notice.png"),
+            mode.loadImage("/lib/status/error.png"),
+            mode.loadImage("/lib/status/error.png"),
+            mode.loadImage("/lib/status/warning.png"),
+            mode.loadImage("/lib/status/warning.png")
     };
 
     font = mode.getFont("status.font");
@@ -402,9 +362,9 @@ public class EditorStatus extends BasicSplitPaneDivider {
         rolloverState = ROLLOVER_CLIPBOARD;
 
       } else if (url != null && mouseX > LEFT_MARGIN &&
-        // calculate right edge of the text for rollovers (otherwise the pane
-        // cannot be resized up or down whenever a URL is being displayed)
-        mouseX < (LEFT_MARGIN + g.getFontMetrics().stringWidth(message))) {
+              // calculate right edge of the text for rollovers (otherwise the pane
+              // cannot be resized up or down whenever a URL is being displayed)
+              mouseX < (LEFT_MARGIN + g.getFontMetrics().stringWidth(message))) {
         rolloverState = ROLLOVER_URL;
       }
     }
@@ -466,8 +426,8 @@ public class EditorStatus extends BasicSplitPaneDivider {
       g.setColor(fgColor[mode]);
     }
     g.drawString(symbol,
-                 left + (buttonSize - g.getFontMetrics().stringWidth(symbol))/2,
-                 (sizeH + ascent) / 2);
+            left + (buttonSize - g.getFontMetrics().stringWidth(symbol))/2,
+            (sizeH + ascent) / 2);
   }
 
 
