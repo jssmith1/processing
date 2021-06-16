@@ -1,6 +1,7 @@
 package processing.mode.java.pdex;
 
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.ArrayAccess;
 import org.eclipse.jdt.core.dom.ArrayCreation;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ITypeBinding;
@@ -21,7 +22,7 @@ import java.util.stream.Collectors;
 public class MatchingRefURLAssembler {
 
     /**
-     * Gets the MatchingRef URL for a missing array dimension.
+     * Gets the MatchingRef path for a missing array dimension.
      * @param problemNode       node of the AST where the problem occurred
      * @return the path and parameters for the corresponding MatchingRef page
      */
@@ -38,7 +39,7 @@ public class MatchingRefURLAssembler {
     }
 
     /**
-     * Gets the MatchingRef URL when the first of two array dimensions is missing.
+     * Gets the MatchingRef path when the first of two array dimensions is missing.
      * @param problemNode       node of the AST where the problem occurred
      * @return the path and parameters for the corresponding MatchingRef page
      */
@@ -56,7 +57,7 @@ public class MatchingRefURLAssembler {
     }
 
     /**
-     * Gets the MatchingRef URL for the use of two array initializers at once.
+     * Gets the MatchingRef path for the use of two array initializers at once.
      * @param problemNode       node of the AST where the problem occurred
      * @return the path and parameters for the corresponding MatchingRef page
      */
@@ -74,7 +75,7 @@ public class MatchingRefURLAssembler {
     }
 
     /**
-     * Gets the MatchingRef URL for a missing method.
+     * Gets the MatchingRef path for a missing method.
      * @param problemNode       node of the AST where the problem occurred
      * @return the path and parameters for the corresponding MatchingRef page
      */
@@ -103,7 +104,7 @@ public class MatchingRefURLAssembler {
     }
 
     /**
-     * Gets the MatchingRef URL for a parameter mismatch in a method call.
+     * Gets the MatchingRef path for a parameter mismatch in a method call.
      * @param problemNode       node of the AST where the problem occurred
      * @return the path and parameters for the corresponding MatchingRef page
      */
@@ -132,7 +133,7 @@ public class MatchingRefURLAssembler {
     }
 
     /**
-     * Gets the MatchingRef URL for a missing return statement in a method.
+     * Gets the MatchingRef path for a missing return statement in a method.
      * @param problemNode       node of the AST where the problem occurred
      * @return the path and parameters for the corresponding MatchingRef page
      */
@@ -154,7 +155,7 @@ public class MatchingRefURLAssembler {
     }
 
     /**
-     * Gets the MatchingRef URL for a mismatch between a variable's type and its assigned value.
+     * Gets the MatchingRef path for a mismatch between a variable's type and its assigned value.
      * @param problemNode       node of the AST where the problem occurred
      * @return the path and parameters for the corresponding MatchingRef page
      */
@@ -172,7 +173,7 @@ public class MatchingRefURLAssembler {
     }
 
     /**
-     * Gets the MatchingRef URL for a missing type.
+     * Gets the MatchingRef path for a missing type.
      * @param problemNode       node of the AST where the problem occurred
      * @return the path and parameters for the corresponding MatchingRef page
      */
@@ -198,8 +199,48 @@ public class MatchingRefURLAssembler {
                 + "&varname=" + varName);
     }
 
+    /**
+     * Gets the MatchingRef path for a missing variable.
+     * @param problemNode       node of the AST where the problem occurred
+     * @return the path and parameters for the corresponding MatchingRef page
+     */
     public Optional<String> getMissingVarPath(String varName, ASTNode problemNode) {
-        return Optional.empty();
+        String params = "?";
+        ASTNode parent = problemNode.getParent();
+        ASTNode grandparent = parent.getParent();
+
+        System.out.println(varName);
+        System.out.println(problemNode.getClass());
+        System.out.println(parent.getClass());
+        System.out.println(grandparent.getClass());
+
+        if (parent instanceof MethodInvocation) {
+            MethodInvocation invocation = (MethodInvocation) parent;
+            List<String> requiredParamTypes = Arrays.stream(
+                    invocation.resolveMethodBinding().getParameterTypes()
+            ).map(ITypeBinding::getName).collect(Collectors.toList());
+            List<String> providedParams = ((List<?>) invocation.arguments()).stream()
+                    .map(Object::toString).collect(Collectors.toList());
+
+            String varType = requiredParamTypes.get(providedParams.indexOf(varName));
+            params += "classname=" + varType + "&varname=" + varName;
+
+        } else if (parent instanceof ArrayAccess && grandparent instanceof VariableDeclarationFragment) {
+            ArrayAccess arrAccess = (ArrayAccess) parent;
+            String length = arrAccess.getIndex().toString();
+
+            // The "varName" is actually the declared type when an array is being created
+            VariableDeclarationFragment declaration = (VariableDeclarationFragment) grandparent;
+            String arrName = declaration.getName().toString();
+
+            params += "classname=" + varName + "&varname=" + arrName;
+        } else {
+            return Optional.empty();
+        }
+
+        return Optional.of("variablenotfound" + params);
     }
+
+
 
 }
