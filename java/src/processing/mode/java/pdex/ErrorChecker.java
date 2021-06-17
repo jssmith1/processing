@@ -160,15 +160,15 @@ class ErrorChecker {
       JavaProblem p = JavaProblem.fromIProblem(iproblem, in.tabIndex, line, badCode);
       p.setPDEOffsets(in.startTabOffset, in.stopTabOffset);
 
-      Optional<String> matchingRefPath = getMatchingRefPath(iproblem, ps.compilationUnit);
-      final String URL = "http://139.147.9.247/";
-      matchingRefPath.ifPresent((path) -> p.setMatchingRefURL(URL + path));
+      Optional<String> matchingRefURL = getMatchingRefURL(iproblem, ps.compilationUnit);
+
+      matchingRefURL.ifPresent(p::setMatchingRefURL);
       return p;
     }
     return null;
   }
 
-  static private Optional<String> getMatchingRefPath(IProblem compilerError, ASTNode ast) {
+  static private Optional<String> getMatchingRefURL(IProblem compilerError, ASTNode ast) {
     String[] problemArguments = compilerError.getArguments();
     ASTNode problemNode = ASTUtils.getASTNodeAt(
             ast,
@@ -180,25 +180,25 @@ class ErrorChecker {
 
     switch (compilerError.getID()) {
       case IProblem.MustDefineEitherDimensionExpressionsOrInitializer:
-        return urlAssembler.getArrDimPath(problemNode);
+        return urlAssembler.getArrDimURL(problemNode);
       case IProblem.IllegalDimension:
-        return urlAssembler.getTwoDimArrPath(problemNode);
+        return urlAssembler.getTwoDimArrURL(problemNode);
       case IProblem.CannotDefineDimensionExpressionsWithInit:
-        return urlAssembler.getTwoInitializerArrPath(problemNode);
+        return urlAssembler.getTwoInitializerArrURL(problemNode);
       case IProblem.UndefinedMethod:
-        return urlAssembler.getMissingMethodPath(problemNode);
+        return urlAssembler.getMissingMethodURL(problemNode);
       case IProblem.ParameterMismatch:
-        return urlAssembler.getParamMismatchPath(problemNode);
+        return urlAssembler.getParamMismatchURL(problemNode);
       case IProblem.ShouldReturnValue:
-        return urlAssembler.getMissingReturnPath(problemNode);
+        return urlAssembler.getMissingReturnURL(problemNode);
       case IProblem.TypeMismatch:
         String providedType = truncateClass(problemArguments[0]);
         String requiredType = truncateClass(problemArguments[1]);
-        return urlAssembler.getTypeMismatchPath(providedType, requiredType, problemNode);
+        return urlAssembler.getTypeMismatchURL(providedType, requiredType, problemNode);
       case IProblem.UndefinedType:
-        return urlAssembler.getMissingTypePath(problemArguments[0], problemNode);
+        return urlAssembler.getMissingTypeURL(problemArguments[0], problemNode);
       case IProblem.UnresolvedVariable:
-        return urlAssembler.getMissingVarPath(problemArguments[0], problemNode);
+        return urlAssembler.getMissingVarURL(problemArguments[0], problemNode);
     }
 
     return Optional.empty();

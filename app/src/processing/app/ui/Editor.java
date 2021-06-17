@@ -2908,26 +2908,6 @@ public abstract class Editor extends JFrame implements RunnerListener {
     if (e instanceof SketchException) {
       SketchException re = (SketchException) e;
 
-      String message = e.getMessage();
-      if (message.startsWith("expecting DOT")) {
-        int msgLength = message.length();
-        String arrName = message.substring(message.lastIndexOf('\'', msgLength - 2) + 1, msgLength - 1);
-
-        Pattern pattern = Pattern.compile("[\\w\\d]+?(?=\\[])");
-
-        String arrType = "";
-        for (int line = re.getCodeLine(); line >= 0; line--) {
-          Matcher matcher = pattern.matcher(textarea.getLineText(line));
-          if (matcher.find()) {
-            arrType = matcher.group();
-            break;
-          }
-        }
-
-        System.out.println(arrName);
-        System.out.println(arrType);
-      }
-
       // Make sure something is printed into the console
       // Status bar is volatile
       if (!re.isStackTraceEnabled()) {

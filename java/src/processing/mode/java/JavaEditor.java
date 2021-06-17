@@ -32,6 +32,7 @@ import processing.app.ui.Toolkit;
 import processing.mode.java.debug.LineBreakpoint;
 import processing.mode.java.debug.LineHighlight;
 import processing.mode.java.debug.LineID;
+import processing.mode.java.pdex.MatchingRefURLAssembler;
 import processing.mode.java.pdex.PreprocessingService;
 import processing.mode.java.pdex.ImportStatement;
 import processing.mode.java.pdex.JavaTextArea;
@@ -1312,6 +1313,35 @@ public class JavaEditor extends Editor {
     });
 
     return currentProblem;
+  }
+
+  public void statusError(Exception err) {
+    super.statusError(err);
+
+    if (!(err instanceof SketchException)) {
+      return;
+    }
+
+    // Get the MatchingRef URL
+    MatchingRefURLAssembler urlAssembler = new MatchingRefURLAssembler();
+    SketchException sketchErr = (SketchException) err;
+    String message = err.getMessage();
+    Optional<String> optionalURL = Optional.empty();
+
+    if (message.startsWith("expecting DOT")) {
+      optionalURL = urlAssembler.getIncorrectVarDeclarationURL(textarea, sketchErr);
+    }
+
+    // Load the page
+    if (optionalURL.isPresent()) {
+      final String finalURL = optionalURL.get();
+      javafx.application.Platform.runLater(() -> {
+        if (webView != null) {
+          webView.getEngine().load(finalURL);
+        }
+      });
+    }
+
   }
 
   public void statusError(String what) {
