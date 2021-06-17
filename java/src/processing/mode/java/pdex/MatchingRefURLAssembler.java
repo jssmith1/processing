@@ -45,7 +45,7 @@ public class MatchingRefURLAssembler {
            so we can be certain that any declarations before the one for arrName
            have semicolons. */
         Pattern pattern = Pattern.compile(
-                "[\\w\\d]+(?=(\\[][^;]*" + arrName + "|[^;]+" + arrName + "\\s*\\[])(\\s+|=))",
+                "[\\w\\d]+(?=\\[][^;]*" + arrName + "(\\s+|=))",
                 Pattern.DOTALL
         );
         Matcher matcher = pattern.matcher(textArea.getText());
