@@ -2906,10 +2906,23 @@ public abstract class Editor extends JFrame implements RunnerListener {
 //    }
 
     if (e instanceof SketchException) {
+
+      String message = e.getMessage();
+      if (message.startsWith("expecting DOT")) {
+        int msgLength = message.length();
+        String arrName = message.substring(message.lastIndexOf('\'', msgLength - 2) + 1, msgLength - 1);
+
+        Pattern pattern = Pattern.compile("[^\\[\\s]+?\\[].*?" + arrName, Pattern.DOTALL);
+        Matcher matcher = pattern.matcher(textarea.getText());
+
+        if (matcher.find()) {
+          String match = matcher.group();
+          String arrType = match.substring(0, match.indexOf('['));
+          System.out.println(arrName);
+          System.out.println(arrType);
+        }
+      }
       SketchException re = (SketchException) e;
-      Pattern pattern = Pattern.compile("\\S+\\s*=\\s*[^\\[]+\\[\\d+]");
-      Matcher matcher = pattern.matcher(textarea.getText());
-      System.out.println(matcher.find() + " " + Arrays.toString(matcher.group().split("\\s+")));
 
       // Make sure something is printed into the console
       // Status bar is volatile
