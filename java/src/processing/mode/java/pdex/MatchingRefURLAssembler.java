@@ -41,17 +41,16 @@ public class MatchingRefURLAssembler {
                 msgLength - 1
         );
 
-        /* Find the closest array declaration above the error line.
-           This will find the correct type unless two different
-           types of arrays are declared on the same line. */
-        Pattern pattern = Pattern.compile("[\\w\\d]+?(?=\\[])");
+        /* An error is thrown on the first array declaration that has no semicolon,
+           so we can be certain that any declarations before the one for arrName
+           have semicolons. */
+        Pattern pattern = Pattern.compile("[\\w\\d]+?(?=\\[][^;]*?" + arrName + "(\\s|=))");
 
         String arrType = "";
         for (int line = exception.getCodeLine(); line >= 0; line--) {
             Matcher matcher = pattern.matcher(textArea.getLineText(line));
             if (matcher.find()) {
                 arrType = matcher.group();
-                break;
             }
         }
 
