@@ -41,6 +41,9 @@ public class MatchingRefURLAssembler {
                 msgLength - 1
         );
 
+        /* Find the closest array declaration above the error line.
+           This will find the correct type unless two different
+           types of arrays are declared on the same line. */
         Pattern pattern = Pattern.compile("[\\w\\d]+?(?=\\[])");
 
         String arrType = "";
