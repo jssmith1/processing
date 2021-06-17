@@ -44,15 +44,15 @@ public class MatchingRefURLAssembler {
         /* An error is thrown on the first array declaration that has no semicolon,
            so we can be certain that any declarations before the one for arrName
            have semicolons. */
-        Pattern pattern = Pattern.compile("[\\w\\d]+?(?=\\[][^;]*?" + arrName + "(\\s|=))");
+        Pattern pattern = Pattern.compile(
+                "[\\w\\d]+(?=(\\[][^;]*" + arrName + "|[^;]+" + arrName + "\\s*\\[])(\\s+|=))",
+                Pattern.DOTALL
+        );
+        Matcher matcher = pattern.matcher(textArea.getText());
 
         String arrType = "";
-        for (int line = exception.getCodeLine(); line >= 0; line--) {
-            Matcher matcher = pattern.matcher(textArea.getLineText(line));
-            if (matcher.find()) {
-                arrType = matcher.group();
-                break;
-            }
+        if (matcher.find()) {
+            arrType = matcher.group();
         }
 
         return Optional.of(URL + "incorrectvariabledeclaration?typename=" + arrType
