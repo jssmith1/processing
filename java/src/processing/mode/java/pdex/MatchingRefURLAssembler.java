@@ -51,6 +51,7 @@ public class MatchingRefURLAssembler {
             Matcher matcher = pattern.matcher(textArea.getLineText(line));
             if (matcher.find()) {
                 arrType = matcher.group();
+                break;
             }
         }
 
