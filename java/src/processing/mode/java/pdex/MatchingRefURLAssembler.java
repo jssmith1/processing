@@ -26,6 +26,31 @@ import java.util.stream.Collectors;
 public class MatchingRefURLAssembler {
     private static final String URL = "http://139.147.9.247/";
 
+    public Optional<String> getClosingCurlyBraceURL(String textAboveError) {
+        int neededLeftBraces = 1;
+
+        // We want to find a block before the extraneous brace
+        int endIndex = textAboveError.lastIndexOf('}');
+        int lastIndex = textAboveError.lastIndexOf('}', endIndex - 1);
+
+        while (neededLeftBraces != 0 && lastIndex > 0) {
+            lastIndex--;
+
+            char nextChar = textAboveError.charAt(lastIndex);
+            if (nextChar == '{') {
+                neededLeftBraces--;
+            } else if (nextChar == '}') {
+                neededLeftBraces++;
+            }
+        }
+
+        int startIndex = textAboveError.lastIndexOf('}', lastIndex) + 1;
+        String mismatchedSnippet = textAboveError.substring(startIndex, endIndex + 1);
+        String correctedSnippet = mismatchedSnippet.substring(0, mismatchedSnippet.length() - 1);
+
+        return Optional.of(URL + "extraneousclosingcurlybrace?classname=Thing&methodname=doSomething");
+    }
+
     /**
      * Gets the MatchingRef URL for an incorrect variable declaration.
      * @param textArea      text area for the file that contains the error
