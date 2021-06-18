@@ -1328,7 +1328,10 @@ public class JavaEditor extends Editor {
     String message = err.getMessage();
     Optional<String> optionalURL = Optional.empty();
 
-    String textAboveError = textarea.getText(0, sketchErr.getCodeColumn());
+    String textAboveError = textarea.getText(
+            0,
+            textarea.getLineStartOffset(sketchErr.getCodeLine()) + sketchErr.getCodeColumn()
+    );
     if (message.equals("expecting EOF, found '}'") && textAboveError != null) {
       optionalURL = urlAssembler.getClosingCurlyBraceURL(textAboveError);
     } else if (message.startsWith("expecting DOT")) {
