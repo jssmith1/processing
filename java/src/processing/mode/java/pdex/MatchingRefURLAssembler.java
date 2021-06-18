@@ -93,6 +93,37 @@ public class MatchingRefURLAssembler {
     }
 
     /**
+     * Gets the MatchingRef URL for an incorrect method declaration.
+     * @param textAboveError      all text in the editor at and above the
+     *                            line with error
+     * @return the the URL with path and parameters for the corresponding MatchingRef page
+     */
+    public Optional<String> getIncorrectMethodDeclarationURL(String textAboveError) {
+        int lastOpenParenthesisIndex = textAboveError.lastIndexOf('(');
+
+        int currentCharIndex = lastOpenParenthesisIndex;
+        char currentChar;
+        do {
+            currentCharIndex--;
+            currentChar = textAboveError.charAt(currentCharIndex);
+        } while (currentCharIndex > 0 && Character.isJavaIdentifierPart(currentChar));
+
+        /* The method name starts one character ahead of the current one if
+           we didn't reach the start of the string */
+        if (currentCharIndex > 0) currentCharIndex++;
+
+        String methodName = textAboveError.substring(currentCharIndex, lastOpenParenthesisIndex);
+
+        if (methodName.equals("draw") || methodName.equals("setup")) {
+
+        } else {
+
+        }
+
+        return Optional.of(URL + "incorrectmethoddeclaration?setupmethodname=size&drawmethodname=rect");
+    }
+
+    /**
      * Gets the MatchingRef URL for a missing array dimension.
      * @param problemNode       node of the AST where the problem occurred
      * @return the the URL with path and parameters for the corresponding MatchingRef page
