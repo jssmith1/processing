@@ -33,16 +33,18 @@ public class MatchingRefURLAssembler {
      * @return the URL with path and parameters for the corresponding MatchingRef page
      */
     public Optional<String> getClosingCurlyBraceURL(String textAboveError) {
-        int neededLeftBraces = 1;
 
         // We want to find a block before the extraneous brace
         int endIndex = textAboveError.lastIndexOf('}');
-        int lastIndex = textAboveError.lastIndexOf('}', endIndex - 1);
+        int previousIndex = textAboveError.lastIndexOf('}', endIndex - 1);
 
-        while (neededLeftBraces != 0 && lastIndex > 0) {
-            lastIndex--;
+        // Count the right brace at previousIndex, but not the one at endIndex
+        int neededLeftBraces = 1;
 
-            char nextChar = textAboveError.charAt(lastIndex);
+        while (neededLeftBraces != 0 && previousIndex > 0) {
+            previousIndex--;
+
+            char nextChar = textAboveError.charAt(previousIndex);
             if (nextChar == '{') {
                 neededLeftBraces--;
             } else if (nextChar == '}') {
@@ -50,7 +52,7 @@ public class MatchingRefURLAssembler {
             }
         }
 
-        int startIndex = textAboveError.lastIndexOf('}', lastIndex) + 1;
+        int startIndex = textAboveError.lastIndexOf('}', previousIndex) + 1;
         String mismatchedSnippet = textAboveError.substring(startIndex, endIndex + 1);
         String correctedSnippet = mismatchedSnippet.substring(0, mismatchedSnippet.length() - 1);
 
