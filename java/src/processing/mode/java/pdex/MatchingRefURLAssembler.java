@@ -12,6 +12,7 @@ import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import processing.app.SketchException;
 import processing.app.syntax.JEditTextArea;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -54,27 +55,25 @@ public class MatchingRefURLAssembler {
      * @return the the URL with path and parameters for the corresponding MatchingRef page
      */
     public Optional<String> getIncorrectVarDeclarationURL(JEditTextArea textArea, SketchException exception) {
-        String errorMessage = exception.getMessage();
+        int errorIndex = textArea.getLineStartOffset(exception.getCodeLine()) + exception.getCodeColumn() - 1;
+        String code = textArea.getText();
+        String declarationStatement = code.substring(errorIndex, code.indexOf(';', errorIndex));
 
-        int msgLength = errorMessage.length();
-        String arrName = errorMessage.substring(
-                errorMessage.lastIndexOf('\'', msgLength - 2) + 1,
-                msgLength - 1
-        );
+        List<String> declaredArrays = getDeclaredArrays(declarationStatement);
 
-        /* An error is thrown on the first array declaration that has no semicolon,
-           so we can be certain that any declarations before the one for arrName
-           have semicolons. */
-        Pattern pattern = Pattern.compile(
-                "[\\w\\d]+(?=\\[][^;]*" + arrName + "(\\s+|=))",
-                Pattern.DOTALL
-        );
-        Matcher matcher = pattern.matcher(textArea.getText());
+        String pattern = "\\s*[\\w\\d$]+\\s*=\\s*(new\\s*[\\w\\d$]+\\s*\\[\\d+]|\\{.*})";
+        Optional<String> firstInvalidDeclarationOptional =
+                declaredArrays.stream().filter((declaration) -> !declaration.matches(pattern)).findFirst();
 
-        String arrType = "";
-        if (matcher.find()) {
-            arrType = matcher.group();
+        if (!firstInvalidDeclarationOptional.isPresent()) {
+            return Optional.empty();
         }
+
+        String firstInvalidDeclaration = firstInvalidDeclarationOptional.get();
+        String arrName = firstInvalidDeclaration.trim().split("[^\\w\\d$]")[0];
+
+        // TODO: get array type
+        String arrType = "";
 
         return Optional.of(URL + "incorrectvariabledeclaration?typename=" + arrType
                 + "&foundname=" + arrName);
@@ -379,6 +378,38 @@ public class MatchingRefURLAssembler {
         }
 
         return previousIndex.get();
+    }
+
+    /**
+     * Extracts array declarations from a declaration statement.
+     * @param declarationStatement  the statement to extract from
+     * @return the individual declarations of all arrays in the statement
+     *         of the form (identifier = new Type[size])
+     */
+    private List<String> getDeclaredArrays(String declarationStatement) {
+        List<String> declaredArrays = new ArrayList<>();
+        int currentIndex = 0;
+        int lastCommaIndex = -1;
+        while (currentIndex < declarationStatement.length()) {
+            char currentChar = declarationStatement.charAt(currentIndex);
+            if (currentChar == '{') {
+
+                // Skip array initializers
+                int matchingBraceIndex = findMatchingBrace(declarationStatement, currentIndex);
+                currentIndex = matchingBraceIndex == -1 ? declarationStatement.length() - 1 : matchingBraceIndex;
+
+            } else if (currentChar == ',') {
+                declaredArrays.add(declarationStatement.substring(lastCommaIndex + 1, currentIndex));
+                lastCommaIndex = currentIndex;
+                currentIndex++;
+            } else {
+                currentIndex++;
+            }
+        }
+
+        declaredArrays.add(declarationStatement.substring(lastCommaIndex + 1));
+
+        return declaredArrays;
     }
 
 }
