@@ -26,6 +26,12 @@ import java.util.stream.Collectors;
 public class MatchingRefURLAssembler {
     private static final String URL = "http://139.147.9.247/";
 
+    /**
+     * Gets the MatchingRef URL for an extra right curly brace.
+     * @param textAboveError    all text in the editor at and above the 
+     *                          line with the extra brace
+     * @return the URL with path and parameters for the corresponding MatchingRef page
+     */
     public Optional<String> getClosingCurlyBraceURL(String textAboveError) {
         int neededLeftBraces = 1;
 
@@ -55,7 +61,7 @@ public class MatchingRefURLAssembler {
      * Gets the MatchingRef URL for an incorrect variable declaration.
      * @param textArea      text area for the file that contains the error
      * @param exception     incorrect declaration exception from compilation
-     * @return the path and parameters for the corresponding MatchingRef page
+     * @return the the URL with path and parameters for the corresponding MatchingRef page
      */
     public Optional<String> getIncorrectVarDeclarationURL(JEditTextArea textArea, SketchException exception) {
         String errorMessage = exception.getMessage();
@@ -87,7 +93,7 @@ public class MatchingRefURLAssembler {
     /**
      * Gets the MatchingRef URL for a missing array dimension.
      * @param problemNode       node of the AST where the problem occurred
-     * @return the path and parameters for the corresponding MatchingRef page
+     * @return the the URL with path and parameters for the corresponding MatchingRef page
      */
     public Optional<String> getArrDimURL(ASTNode problemNode) {
         ASTNode greatGrandparent = problemNode.getParent().getParent().getParent();
@@ -104,7 +110,7 @@ public class MatchingRefURLAssembler {
     /**
      * Gets the MatchingRef URL when the first of two array dimensions is missing.
      * @param problemNode       node of the AST where the problem occurred
-     * @return the path and parameters for the corresponding MatchingRef page
+     * @return the the URL with path and parameters for the corresponding MatchingRef page
      */
     public Optional<String> getTwoDimArrURL(ASTNode problemNode) {
         ASTNode parent = problemNode.getParent();
@@ -122,7 +128,7 @@ public class MatchingRefURLAssembler {
     /**
      * Gets the MatchingRef URL for the use of two array initializers at once.
      * @param problemNode       node of the AST where the problem occurred
-     * @return the path and parameters for the corresponding MatchingRef page
+     * @return the the URL with path and parameters for the corresponding MatchingRef page
      */
     public Optional<String> getTwoInitializerArrURL(ASTNode problemNode) {
         ASTNode parent = problemNode.getParent();
@@ -140,7 +146,7 @@ public class MatchingRefURLAssembler {
     /**
      * Gets the MatchingRef URL for a missing method.
      * @param problemNode       node of the AST where the problem occurred
-     * @return the path and parameters for the corresponding MatchingRef page
+     * @return the the URL with path and parameters for the corresponding MatchingRef page
      */
     public Optional<String> getMissingMethodURL(ASTNode problemNode) {
         ASTNode parent = problemNode.getParent();
@@ -169,7 +175,7 @@ public class MatchingRefURLAssembler {
     /**
      * Gets the MatchingRef URL for a parameter mismatch in a method call.
      * @param problemNode       node of the AST where the problem occurred
-     * @return the path and parameters for the corresponding MatchingRef page
+     * @return the the URL with path and parameters for the corresponding MatchingRef page
      */
     public Optional<String> getParamMismatchURL(ASTNode problemNode) {
         ASTNode parent = problemNode.getParent();
@@ -198,7 +204,7 @@ public class MatchingRefURLAssembler {
     /**
      * Gets the MatchingRef URL for a missing return statement in a method.
      * @param problemNode       node of the AST where the problem occurred
-     * @return the path and parameters for the corresponding MatchingRef page
+     * @return the the URL with path and parameters for the corresponding MatchingRef page
      */
     public Optional<String> getMissingReturnURL(ASTNode problemNode) {
         ASTNode parent = problemNode.getParent();
@@ -220,7 +226,7 @@ public class MatchingRefURLAssembler {
     /**
      * Gets the MatchingRef URL for a mismatch between a variable's type and its assigned value.
      * @param problemNode       node of the AST where the problem occurred
-     * @return the path and parameters for the corresponding MatchingRef page
+     * @return the the URL with path and parameters for the corresponding MatchingRef page
      */
     public Optional<String> getTypeMismatchURL(String providedType, String requiredType, ASTNode problemNode) {
         ASTNode parent = problemNode.getParent();
@@ -238,7 +244,7 @@ public class MatchingRefURLAssembler {
     /**
      * Gets the MatchingRef URL for a missing type.
      * @param problemNode       node of the AST where the problem occurred
-     * @return the path and parameters for the corresponding MatchingRef page
+     * @return the the URL with path and parameters for the corresponding MatchingRef page
      */
     public Optional<String> getMissingTypeURL(String missingType, ASTNode problemNode) {
         ASTNode grandparent = problemNode.getParent().getParent();
@@ -265,7 +271,7 @@ public class MatchingRefURLAssembler {
     /**
      * Gets the MatchingRef URL for a missing variable.
      * @param problemNode       node of the AST where the problem occurred
-     * @return the path and parameters for the corresponding MatchingRef page
+     * @return the the URL with path and parameters for the corresponding MatchingRef page
      */
     public Optional<String> getMissingVarURL(String varName, ASTNode problemNode) {
         String params = "?";
