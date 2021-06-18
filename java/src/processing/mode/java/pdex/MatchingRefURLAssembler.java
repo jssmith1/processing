@@ -15,6 +15,7 @@ import processing.app.syntax.JEditTextArea;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -36,23 +37,10 @@ public class MatchingRefURLAssembler {
 
         // We want to find a block before the extraneous brace
         int endIndex = textAboveError.lastIndexOf('}');
-        int previousIndex = textAboveError.lastIndexOf('}', endIndex - 1);
+        int rightBraceIndex = textAboveError.lastIndexOf('}', endIndex - 1);
+        int leftBraceIndex = findMatchingBrace(textAboveError, rightBraceIndex);
 
-        // Count the right brace at previousIndex, but not the one at endIndex
-        int neededLeftBraces = 1;
-
-        while (neededLeftBraces != 0 && previousIndex > 0) {
-            previousIndex--;
-
-            char nextChar = textAboveError.charAt(previousIndex);
-            if (nextChar == '{') {
-                neededLeftBraces--;
-            } else if (nextChar == '}') {
-                neededLeftBraces++;
-            }
-        }
-
-        int startIndex = textAboveError.lastIndexOf('}', previousIndex) + 1;
+        int startIndex = textAboveError.lastIndexOf('}', leftBraceIndex) + 1;
         String mismatchedSnippet = textAboveError.substring(startIndex, endIndex + 1);
         String correctedSnippet = mismatchedSnippet.substring(0, mismatchedSnippet.length() - 1);
 
@@ -343,6 +331,54 @@ public class MatchingRefURLAssembler {
         return Optional.of(URL + "variablenotfound" + params);
     }
 
+    /**
+     * Finds the index for a brace matching the one at the index provided.
+     * @param code          code to search in
+     * @param startIndex    index where the the brace to find the match for is
+     * @return the index of the matching brace or -1 if there is no matching brace
+     */
+    private int findMatchingBrace(String code, int startIndex) {
+        AtomicInteger previousIndex = new AtomicInteger(startIndex);
+        int neededLeftBraces = 0;
 
+        char startChar = code.charAt(startIndex);
+        boolean findRightBrace;
+        Runnable moveToNextIndex;
+
+        // Count the initial brace
+        if (startChar == '{') {
+            neededLeftBraces--;
+            findRightBrace = true;
+            moveToNextIndex = previousIndex::getAndIncrement;
+        } else if (startChar == '}') {
+            neededLeftBraces++;
+            findRightBrace = false;
+            moveToNextIndex = previousIndex::getAndDecrement;
+        } else {
+            throw new IllegalArgumentException("Character at index "
+                    + startIndex + " is not a brace.");
+        }
+
+        // Find the matching brace
+        while (neededLeftBraces != 0 && previousIndex.get() > 0 && previousIndex.get() < code.length() - 1) {
+            moveToNextIndex.run();
+
+            char nextChar = code.charAt(previousIndex.get());
+            if (nextChar == '{') {
+                neededLeftBraces--;
+            } else if (nextChar == '}') {
+                neededLeftBraces++;
+            }
+        }
+
+        char lastCharacter = code.charAt(previousIndex.get());
+        boolean isMatchingRight = findRightBrace && lastCharacter == '}';
+        boolean isMatchingLeft = !findRightBrace && lastCharacter == '{';
+        if (!isMatchingLeft && !isMatchingRight) {
+            return -1;
+        }
+
+        return previousIndex.get();
+    }
 
 }
