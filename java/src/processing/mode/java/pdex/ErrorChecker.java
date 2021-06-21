@@ -199,6 +199,8 @@ class ErrorChecker {
         return urlAssembler.getMissingTypeURL(problemArguments[0], problemNode);
       case IProblem.UnresolvedVariable:
         return urlAssembler.getMissingVarURL(problemArguments[0], problemNode);
+      case IProblem.UninitializedLocalVariable:
+        return urlAssembler.getUninitializedVarURL(problemArguments[0], problemNode);
     }
 
     return Optional.empty();

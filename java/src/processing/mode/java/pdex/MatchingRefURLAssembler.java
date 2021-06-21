@@ -4,6 +4,7 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ArrayAccess;
 import org.eclipse.jdt.core.dom.ArrayCreation;
 import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
@@ -346,6 +347,30 @@ public class MatchingRefURLAssembler {
         }
 
         return Optional.of(URL + "variablenotfound" + params);
+    }
+
+    /**
+     * Gets the MatchingRef URL for an uninitialized variable.
+     * @param problemNode       node of the AST where the problem occurred
+     * @return the the URL with path and parameters for the corresponding MatchingRef page
+     */
+    public Optional<String> getUninitializedVarURL(String varName, ASTNode problemNode) {
+        String params = "?varname=" + varName;
+        ASTNode parent = problemNode.getParent();
+
+        Expression expressionNode;
+        if (parent instanceof Expression) {
+            expressionNode = (Expression) parent;
+        } else if (parent instanceof ExpressionStatement) {
+            expressionNode = ((ExpressionStatement) parent).getExpression();
+        } else {
+            return Optional.empty();
+        }
+
+        String type = expressionNode.resolveTypeBinding().getName();
+        params += "&typename=" + type;
+
+        return Optional.of(URL + "variablenotinit" + params);
     }
 
     /**
