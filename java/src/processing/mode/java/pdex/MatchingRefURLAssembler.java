@@ -74,8 +74,23 @@ public class MatchingRefURLAssembler {
         String firstInvalidDeclaration = firstInvalidDeclarationOptional.get();
         String arrName = firstInvalidDeclaration.trim().split("[^\\w\\d$]")[0];
 
-        // TODO: get array type
-        String arrType = "";
+        // Get array type
+        String beforeErrorText = code.substring(0, errorIndex);
+        int currentIndex = beforeErrorText.length() - 1;
+
+        boolean hasIdentifierEnded = false;
+        StringBuilder arrType = new StringBuilder();
+        while (currentIndex >= 0 && !hasIdentifierEnded) {
+            String currentChar = beforeErrorText.substring(currentIndex, currentIndex + 1);
+
+            if (!currentChar.matches("[\\s\\[\\]]")) {
+                arrType.insert(0, currentChar);
+            } else if (arrType.length() > 0) {
+                hasIdentifierEnded = true;
+            }
+
+            currentIndex--;
+        }
 
         return Optional.of(URL + "incorrectvariabledeclaration?typename=" + arrType
                 + "&foundname=" + arrName);
