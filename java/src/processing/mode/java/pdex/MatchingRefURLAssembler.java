@@ -55,11 +55,15 @@ public class MatchingRefURLAssembler {
     public Optional<String> getIncorrectVarDeclarationURL(JEditTextArea textArea, SketchException exception) {
         int errorIndex = textArea.getLineStartOffset(exception.getCodeLine()) + exception.getCodeColumn() - 1;
         String code = textArea.getText();
-        String declarationStatement = code.substring(errorIndex, code.indexOf(';', errorIndex));
+        String declarationStatement = code.substring(errorIndex);
+        int statementEndIndex = declarationStatement.indexOf(';', errorIndex);
+        if (statementEndIndex >= 0) {
+            declarationStatement = declarationStatement.substring(0, statementEndIndex);
+        }
 
         List<String> declaredArrays = getDeclaredArrays(declarationStatement);
 
-        String pattern = "\\s*[\\w\\d$]+\\s*=\\s*(new\\s*[\\w\\d$]+\\s*\\[\\d+]|\\{.*})";
+        String pattern = "\\s*[\\w\\d$]+\\s*=\\s*(new\\s*[\\w\\d$]+\\s*\\[\\d+]|\\{.*})\\s*[,;]";
         Optional<String> firstInvalidDeclarationOptional =
                 declaredArrays.stream().filter((declaration) -> !declaration.matches(pattern)).findFirst();
 
@@ -382,7 +386,7 @@ public class MatchingRefURLAssembler {
      * Extracts array declarations from a declaration statement.
      * @param declarationStatement  the statement to extract from
      * @return the individual declarations of all arrays in the statement
-     *         of the form (identifier = new Type[size])
+     *         of the form (identifier = new Type[size],)
      */
     private List<String> getDeclaredArrays(String declarationStatement) {
         List<String> declaredArrays = new ArrayList<>();
@@ -397,7 +401,7 @@ public class MatchingRefURLAssembler {
                 currentIndex = matchingBraceIndex == -1 ? declarationStatement.length() - 1 : matchingBraceIndex;
 
             } else if (currentChar == ',') {
-                declaredArrays.add(declarationStatement.substring(lastCommaIndex + 1, currentIndex));
+                declaredArrays.add(declarationStatement.substring(lastCommaIndex + 1, currentIndex + 1));
                 lastCommaIndex = currentIndex;
                 currentIndex++;
             } else {
