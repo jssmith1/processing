@@ -8,6 +8,7 @@ import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import processing.app.SketchException;
@@ -398,6 +399,24 @@ public class MatchingRefURLAssembler {
         params += "&staticmethodname=" + staticMethod;
 
         return Optional.of(URL + "nonstaticfromstatic" + params);
+    }
+
+    /**
+     * Gets the MatchingRef URL for a VariableDeclarators error.
+     * @param problemNode       node of the AST where the problem occurred
+     * @return the the URL with path and parameters for the corresponding MatchingRef page
+     */
+    public Optional<String> getVariableDeclaratorsURL(ASTNode problemNode) {
+        String methodName = problemNode.toString();
+
+        ASTNode parent = problemNode.getParent();
+        if (parent instanceof QualifiedName) {
+            methodName = parent.toString();
+        }
+
+        String params = "?methodonename=" + methodName;
+
+        return Optional.of(URL + "syntaxerrorvariabledeclarators" + params);
     }
 
     /**

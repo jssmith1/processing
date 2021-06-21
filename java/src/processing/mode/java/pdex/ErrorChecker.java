@@ -161,7 +161,6 @@ class ErrorChecker {
       p.setPDEOffsets(in.startTabOffset, in.stopTabOffset);
 
       Optional<String> matchingRefURL = getMatchingRefURL(iproblem, ps.compilationUnit);
-
       matchingRefURL.ifPresent(p::setMatchingRefURL);
       return p;
     }
@@ -203,6 +202,15 @@ class ErrorChecker {
         return urlAssembler.getUninitializedVarURL(problemArguments[0], problemNode);
       case IProblem.StaticMethodRequested:
         return urlAssembler.getStaticErrorURL(problemArguments[0], problemArguments[1], problemNode);
+      case IProblem.UndefinedField:
+      case IProblem.UndefinedName:
+        return urlAssembler.getVariableDeclaratorsURL(problemNode);
+      case IProblem.ParsingErrorInsertToComplete:
+        if (Arrays.asList(problemArguments).contains("VariableDeclarators")) {
+          return urlAssembler.getVariableDeclaratorsURL(problemNode);
+        }
+
+        break;
     }
 
     return Optional.empty();
