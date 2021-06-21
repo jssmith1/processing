@@ -40,7 +40,8 @@ public class MatchingRefURLAssembler {
         int leftBraceIndex = findMatchingBrace(textAboveError, rightBraceIndex);
 
         int startIndex = textAboveError.lastIndexOf('}', leftBraceIndex) + 1;
-        String mismatchedSnippet = textAboveError.substring(startIndex, endIndex + 1);
+        String mismatchedSnippet = textAboveError.substring(startIndex, leftBraceIndex + 1)
+                + "\n  ...\n" + textAboveError.substring(rightBraceIndex, endIndex + 1);
         String correctedSnippet = mismatchedSnippet.substring(0, mismatchedSnippet.length() - 1);
 
         return Optional.of(URL + "extraneousclosingcurlybrace?classname=Thing&methodname=doSomething");
