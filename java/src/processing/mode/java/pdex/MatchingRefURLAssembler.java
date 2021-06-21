@@ -264,6 +264,8 @@ public class MatchingRefURLAssembler {
 
     /**
      * Gets the MatchingRef URL for a mismatch between a variable's type and its assigned value.
+     * @param providedType      the type provided by the programmer
+     * @param requiredType      the type required by the method
      * @param problemNode       node of the AST where the problem occurred
      * @return the the URL with path and parameters for the corresponding MatchingRef page
      */
@@ -282,6 +284,7 @@ public class MatchingRefURLAssembler {
 
     /**
      * Gets the MatchingRef URL for a missing type.
+     * @param missingType       name of the missing type
      * @param problemNode       node of the AST where the problem occurred
      * @return the the URL with path and parameters for the corresponding MatchingRef page
      */
@@ -309,6 +312,7 @@ public class MatchingRefURLAssembler {
 
     /**
      * Gets the MatchingRef URL for a missing variable.
+     * @param varName           name of the missing variable
      * @param problemNode       node of the AST where the problem occurred
      * @return the the URL with path and parameters for the corresponding MatchingRef page
      */
@@ -351,6 +355,7 @@ public class MatchingRefURLAssembler {
 
     /**
      * Gets the MatchingRef URL for an uninitialized variable.
+     * @param varName           name of the uninitialized variable
      * @param problemNode       node of the AST where the problem occurred
      * @return the the URL with path and parameters for the corresponding MatchingRef page
      */
@@ -371,6 +376,28 @@ public class MatchingRefURLAssembler {
         params += "&typename=" + type;
 
         return Optional.of(URL + "variablenotinit" + params);
+    }
+
+    /**
+     * Gets the MatchingRef URL for a non-static method call in a static context.
+     * @param fileName          name of the file where the error is located
+     * @param nonStaticMethod   name of the non-static method
+     * @param problemNode       node of the AST where the problem occurred
+     * @return the the URL with path and parameters for the corresponding MatchingRef page
+     */
+    public Optional<String> getStaticErrorURL(String fileName, String nonStaticMethod, ASTNode problemNode) {
+        String params = "?methodname=" + nonStaticMethod;
+
+        ASTNode node = problemNode;
+        while (!(node instanceof MethodDeclaration)) {
+            node = node.getParent();
+            if (node == null) return Optional.empty();
+        }
+
+        String staticMethod = ((MethodDeclaration) node).getName().toString();
+        params += "&staticmethodname=" + staticMethod;
+
+        return Optional.of(URL + "nonstaticfromstatic" + params);
     }
 
     /**

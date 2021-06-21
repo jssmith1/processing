@@ -201,6 +201,8 @@ class ErrorChecker {
         return urlAssembler.getMissingVarURL(problemArguments[0], problemNode);
       case IProblem.UninitializedLocalVariable:
         return urlAssembler.getUninitializedVarURL(problemArguments[0], problemNode);
+      case IProblem.StaticMethodRequested:
+        return urlAssembler.getStaticErrorURL(problemArguments[0], problemArguments[1], problemNode);
     }
 
     return Optional.empty();
