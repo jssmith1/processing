@@ -121,7 +121,10 @@ public class MatchingRefURLAssembler {
             declarationStatement = (VariableDeclarationStatement) greatGreatGrandparent;
         } else if (problemNode instanceof VariableDeclarationStatement) {
             declarationStatement = (VariableDeclarationStatement) problemNode;
+
+            // Assume that the incorrect variable is the first one declared
             declarationFragment = (VariableDeclarationFragment) declarationStatement.fragments().get(0);
+
         } else {
             return Optional.empty();
         }
@@ -453,9 +456,16 @@ public class MatchingRefURLAssembler {
         return Optional.of(URL + "syntaxerrorvariabledeclarators" + params);
     }
 
+    /**
+     * Gets the MatchingRef URL for a VariableDeclarators error.
+     * @param type              the type of variable the method was invoked on
+     * @param methodName        the name of the method that was invoked
+     * @param problemNode       node of the AST where the problem occurred
+     * @return the the URL with path and parameters for the corresponding MatchingRef page
+     */
     public Optional<String> getMethodCallWrongTypeURL(String type, String methodName, ASTNode problemNode) {
-        System.out.println(((MethodInvocation) problemNode.getParent()).resolveMethodBinding());
-        return Optional.empty();
+        String variableName = problemNode.toString();
+        return Optional.of(URL + "methodcallonwrongtype?methodname=" + methodName + "&typetwoname=" + type);
     }
 
     /**
