@@ -100,6 +100,40 @@ public class MatchingRefURLAssembler {
     }
 
     /**
+     * Gets the MatchingRef URL for an incorrect variable declaration.
+     * @param problemNode       node of the AST where the problem occurred
+     * @return the the URL with path and parameters for the corresponding MatchingRef page
+     */
+    public Optional<String> getIncorrectVarDeclarationURL(ASTNode problemNode) {
+        ASTNode grandparent = problemNode.getParent().getParent();
+        ASTNode greatGrandparent = grandparent.getParent();
+        ASTNode greatGreatGrandparent = greatGrandparent.getParent();
+
+        VariableDeclarationFragment declarationFragment;
+        VariableDeclarationStatement declarationStatement;
+        if (grandparent instanceof VariableDeclarationFragment
+                && greatGrandparent instanceof VariableDeclarationStatement) {
+            declarationFragment = (VariableDeclarationFragment) grandparent;
+            declarationStatement = (VariableDeclarationStatement) greatGrandparent;
+        } else if (greatGrandparent instanceof VariableDeclarationFragment
+                && greatGreatGrandparent instanceof VariableDeclarationStatement) {
+            declarationFragment = (VariableDeclarationFragment) greatGrandparent;
+            declarationStatement = (VariableDeclarationStatement) greatGreatGrandparent;
+        } else if (problemNode instanceof VariableDeclarationStatement) {
+            declarationStatement = (VariableDeclarationStatement) problemNode;
+            declarationFragment = (VariableDeclarationFragment) declarationStatement.fragments().get(0);
+        } else {
+            return Optional.empty();
+        }
+
+        String arrName = declarationFragment.getName().toString();
+        String arrType = declarationStatement.getType().toString().replace("[]", "");
+
+        return Optional.of(URL + "incorrectvariabledeclaration?typename=" + arrType
+                + "&foundname=" + arrName);
+    }
+
+    /**
      * Gets the MatchingRef URL for an incorrect method declaration.
      * @param textAboveError      all text in the editor at and above the
      *                            line with error
@@ -417,6 +451,11 @@ public class MatchingRefURLAssembler {
         String params = "?methodonename=" + methodName;
 
         return Optional.of(URL + "syntaxerrorvariabledeclarators" + params);
+    }
+
+    public Optional<String> getMethodCallWrongTypeURL(String type, String methodName, ASTNode problemNode) {
+        System.out.println(((MethodInvocation) problemNode.getParent()).resolveMethodBinding());
+        return Optional.empty();
     }
 
     /**

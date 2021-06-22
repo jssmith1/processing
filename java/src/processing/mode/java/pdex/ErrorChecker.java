@@ -26,6 +26,8 @@ import com.google.classpath.ClassPathFactory;
 import com.google.classpath.RegExpResourceFilter;
 
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.ArrayAccess;
+import org.eclipse.jdt.core.dom.ArrayCreation;
 import processing.app.Language;
 import processing.app.Problem;
 import processing.mode.java.JavaEditor;
@@ -206,11 +208,21 @@ class ErrorChecker {
       case IProblem.UndefinedName:
         return urlAssembler.getVariableDeclaratorsURL(problemNode);
       case IProblem.ParsingErrorInsertToComplete:
-        if (Arrays.asList(problemArguments).contains("VariableDeclarators")) {
+        List<String> argsList = Arrays.asList(problemArguments);
+
+        if (argsList.contains("VariableDeclarators")) {
           return urlAssembler.getVariableDeclaratorsURL(problemNode);
         }
 
+        ASTNode parent = problemNode.getParent();
+        ASTNode grandparent = problemNode.getParent().getParent();
+        if (parent instanceof ArrayCreation || grandparent instanceof ArrayAccess || argsList.contains("Dimensions")) {
+          return urlAssembler.getIncorrectVarDeclarationURL(problemNode);
+        }
+
         break;
+      case IProblem.NoMessageSendOnBaseType:
+        return urlAssembler.getMethodCallWrongTypeURL(problemArguments[0], problemArguments[1], problemNode);
     }
 
     return Optional.empty();
