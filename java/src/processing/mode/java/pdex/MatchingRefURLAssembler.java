@@ -309,13 +309,7 @@ public class MatchingRefURLAssembler {
      * @return the the URL with path and parameters for the corresponding MatchingRef page
      */
     public Optional<String> getTypeMismatchURL(String providedType, String requiredType, ASTNode problemNode) {
-        ASTNode parent = problemNode.getParent();
-        if (!(parent instanceof VariableDeclarationFragment)) {
-            return Optional.empty();
-        }
-
-        String varName = ((VariableDeclarationFragment) parent).getName().toString();
-
+        String varName = problemNode.toString();
         return Optional.of(URL + "typemismatch?typeonename=" + providedType
                 + "&typetwoname=" + requiredType
                 + "&varname=" + varName);

@@ -201,6 +201,7 @@ class ErrorChecker {
       case IProblem.ShouldReturnValue:
         return urlAssembler.getMissingReturnURL(problemNode);
       case IProblem.TypeMismatch:
+      case IProblem.ReturnTypeMismatch:
         String providedType = truncateClass(problemArguments[0]);
         String requiredType = truncateClass(problemArguments[1]);
         return urlAssembler.getTypeMismatchURL(providedType, requiredType, problemNode);
