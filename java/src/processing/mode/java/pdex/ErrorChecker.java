@@ -249,18 +249,7 @@ class ErrorChecker {
 
         break;
       case IProblem.ParsingErrorDeleteToken:
-        String token = problemArguments[0];
-
-        char[] chars = token.toCharArray();
-        boolean couldBeType = IntStream.range(0, chars.length).allMatch(
-                index -> Character.isJavaIdentifierPart(chars[index])
-        );
-
-        if (couldBeType) {
-          return urlAssembler.getUnexpectedTokenURL(token);
-        }
-
-        break;
+        return urlAssembler.getUnexpectedTokenURL(problemArguments[0]);
       case IProblem.NoMessageSendOnBaseType:
         return urlAssembler.getMethodCallWrongTypeURL(problemArguments[0], problemArguments[1], problemNode);
     }

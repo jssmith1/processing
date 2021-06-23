@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Creates URLs for MatchingRef errors based on the AST.
@@ -422,6 +423,10 @@ public class MatchingRefURLAssembler {
      * @return the the URL with path and parameters for the corresponding MatchingRef page
      */
     public Optional<String> getUnexpectedTokenURL(String typeName) {
+        if (!couldBeType(typeName)) {
+            return Optional.empty();
+        }
+
         return Optional.of(URL + "unexpectedtoken?typename=" + typeName);
     }
 
@@ -557,6 +562,18 @@ public class MatchingRefURLAssembler {
         declaredArrays.add(declarationStatement.substring(lastCommaIndex + 1));
 
         return declaredArrays;
+    }
+
+    /**
+     * Checks if a token could be a type.
+     * @param token     the token to check
+     * @return whether this token could be a type
+     */
+    private boolean couldBeType(String token) {
+        char[] chars = token.toCharArray();
+        return IntStream.range(0, chars.length).allMatch(
+                index -> Character.isJavaIdentifierPart(chars[index])
+        );
     }
 
 }

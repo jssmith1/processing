@@ -1338,6 +1338,9 @@ public class JavaEditor extends Editor {
       optionalURL = urlAssembler.getIncorrectVarDeclarationURL(textarea, sketchErr);
     } else if (message.equals("It looks like you're mixing \"active\" and \"static\" modes.") && textAboveError != null) {
       optionalURL = urlAssembler.getIncorrectMethodDeclarationURL(textAboveError);
+    } else if (message.startsWith("unexpected token:")) {
+      String token = message.substring(message.indexOf(':') + 1).trim();
+      optionalURL = urlAssembler.getUnexpectedTokenURL(token);
     }
 
     // Load the page
