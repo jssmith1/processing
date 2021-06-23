@@ -1328,9 +1328,13 @@ public class JavaEditor extends Editor {
     String message = err.getMessage();
     Optional<String> optionalURL = Optional.empty();
 
+    // Not all errors have a line and column
+    int line = Math.max(sketchErr.getCodeLine(), 0);
+    int column = Math.max(sketchErr.getCodeColumn(), 0);
+
     String textAboveError = textarea.getText(
             0,
-            textarea.getLineStartOffset(sketchErr.getCodeLine()) + sketchErr.getCodeColumn()
+            textarea.getLineStartOffset(line) + column
     );
     if (message.equals("expecting EOF, found '}'") && textAboveError != null) {
       optionalURL = urlAssembler.getClosingCurlyBraceURL(textAboveError);
