@@ -417,6 +417,15 @@ public class MatchingRefURLAssembler {
     }
 
     /**
+     * Gets the MatchingRef URL for an unexpected type name.
+     * @param typeName      the unexpected type name
+     * @return the the URL with path and parameters for the corresponding MatchingRef page
+     */
+    public Optional<String> getUnexpectedTokenURL(String typeName) {
+        return Optional.of(URL + "unexpectedtoken?typename=" + typeName);
+    }
+
+    /**
      * Gets the MatchingRef URL for a non-static method call in a static context.
      * @param fileName          name of the file where the error is located
      * @param nonStaticMethod   name of the non-static method

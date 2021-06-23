@@ -18,6 +18,7 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.eclipse.jdt.core.compiler.IProblem;
 
@@ -28,6 +29,13 @@ import com.google.classpath.RegExpResourceFilter;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ArrayAccess;
 import org.eclipse.jdt.core.dom.ArrayCreation;
+import org.eclipse.jdt.core.dom.DoStatement;
+import org.eclipse.jdt.core.dom.EnhancedForStatement;
+import org.eclipse.jdt.core.dom.ForStatement;
+import org.eclipse.jdt.core.dom.IfStatement;
+import org.eclipse.jdt.core.dom.SwitchStatement;
+import org.eclipse.jdt.core.dom.TryStatement;
+import org.eclipse.jdt.core.dom.WhileStatement;
 import processing.app.Language;
 import processing.app.Problem;
 import processing.mode.java.JavaEditor;
@@ -210,6 +218,7 @@ class ErrorChecker {
       case IProblem.ParsingErrorInsertToComplete:
         List<String> argsList = Arrays.asList(problemArguments);
 
+        // Handle incorrect variable declaration
         if (argsList.contains("VariableDeclarators")) {
           return urlAssembler.getVariableDeclaratorsURL(problemNode);
         }
@@ -218,6 +227,37 @@ class ErrorChecker {
         ASTNode grandparent = problemNode.getParent().getParent();
         if (parent instanceof ArrayCreation || grandparent instanceof ArrayAccess || argsList.contains("Dimensions")) {
           return urlAssembler.getIncorrectVarDeclarationURL(problemNode);
+        }
+
+        /* Incorrect control structures almost always have one of these statements as the
+           problem node, its parent, or its grandparent. Use reflection here instead of regular
+           instanceof to make the code more concise and readable. */
+        Class<?>[] statementClasses = {ForStatement.class, TryStatement.class, DoStatement.class,
+                SwitchStatement.class, IfStatement.class, EnhancedForStatement.class, WhileStatement.class};
+        ASTNode[] nearbyNodes = {problemNode, parent, grandparent};
+        for (ASTNode node : nearbyNodes) {
+          for (Class<?> statementClass : statementClasses) {
+            if (statementClass.isInstance(node)) {
+
+              /* Issues with control structures are most likely integer-related,
+                 and the type isn't usually given in the problem arguments. */
+              return urlAssembler.getUnexpectedTokenURL("int");
+
+            }
+          }
+        }
+
+        break;
+      case IProblem.ParsingErrorDeleteToken:
+        String token = problemArguments[0];
+
+        char[] chars = token.toCharArray();
+        boolean couldBeType = IntStream.range(0, chars.length).allMatch(
+                index -> Character.isJavaIdentifierPart(chars[index])
+        );
+
+        if (couldBeType) {
+          return urlAssembler.getUnexpectedTokenURL(token);
         }
 
         break;
