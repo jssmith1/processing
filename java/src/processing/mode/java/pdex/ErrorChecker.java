@@ -18,7 +18,6 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import org.eclipse.jdt.core.compiler.IProblem;
 
@@ -31,6 +30,7 @@ import org.eclipse.jdt.core.dom.ArrayAccess;
 import org.eclipse.jdt.core.dom.ArrayCreation;
 import org.eclipse.jdt.core.dom.DoStatement;
 import org.eclipse.jdt.core.dom.EnhancedForStatement;
+import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.ForStatement;
 import org.eclipse.jdt.core.dom.IfStatement;
 import org.eclipse.jdt.core.dom.SwitchStatement;
@@ -226,7 +226,8 @@ class ErrorChecker {
 
         ASTNode parent = problemNode.getParent();
         ASTNode grandparent = problemNode.getParent().getParent();
-        if (parent instanceof ArrayCreation || grandparent instanceof ArrayAccess || argsList.contains("Dimensions")) {
+        if (parent instanceof ArrayCreation || grandparent instanceof ArrayAccess || argsList.contains("Dimensions")
+                || (parent instanceof FieldDeclaration && ((FieldDeclaration) parent).getType().isArrayType())) {
           return urlAssembler.getIncorrectVarDeclarationURL(problemNode);
         }
 

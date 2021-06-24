@@ -5,6 +5,7 @@ import org.eclipse.jdt.core.dom.ArrayAccess;
 import org.eclipse.jdt.core.dom.ArrayCreation;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
+import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
@@ -26,6 +27,7 @@ import java.util.stream.IntStream;
  * Creates URLs for MatchingRef errors based on the AST.
  * @author soir20
  */
+@SuppressWarnings({"SimplifyOptionalCallChains", "PatternVariableCanBeUsed"})
 public class MatchingRefURLAssembler {
     private static final String URL = "http://139.147.9.247/";
 
@@ -106,32 +108,16 @@ public class MatchingRefURLAssembler {
      * @return the the URL with path and parameters for the corresponding MatchingRef page
      */
     public Optional<String> getIncorrectVarDeclarationURL(ASTNode problemNode) {
-        ASTNode grandparent = problemNode.getParent().getParent();
-        ASTNode greatGrandparent = grandparent.getParent();
-        ASTNode greatGreatGrandparent = greatGrandparent.getParent();
-
-        VariableDeclarationFragment declarationFragment;
-        VariableDeclarationStatement declarationStatement;
-        if (grandparent instanceof VariableDeclarationFragment
-                && greatGrandparent instanceof VariableDeclarationStatement) {
-            declarationFragment = (VariableDeclarationFragment) grandparent;
-            declarationStatement = (VariableDeclarationStatement) greatGrandparent;
-        } else if (greatGrandparent instanceof VariableDeclarationFragment
-                && greatGreatGrandparent instanceof VariableDeclarationStatement) {
-            declarationFragment = (VariableDeclarationFragment) greatGrandparent;
-            declarationStatement = (VariableDeclarationStatement) greatGreatGrandparent;
-        } else if (problemNode instanceof VariableDeclarationStatement) {
-            declarationStatement = (VariableDeclarationStatement) problemNode;
-
-            // Assume that the incorrect variable is the first one declared
-            declarationFragment = (VariableDeclarationFragment) declarationStatement.fragments().get(0);
-
-        } else {
+        Optional<VariableDeclarationFragment> fragmentOptional = findDeclarationFragment(problemNode);
+        System.out.println(fragmentOptional.isPresent());
+        if (!fragmentOptional.isPresent()) {
             return Optional.empty();
         }
 
-        String arrName = declarationFragment.getName().toString();
-        String arrType = declarationStatement.getType().toString().replace("[]", "");
+        VariableDeclarationFragment fragment = fragmentOptional.get();
+
+        String arrName = fragment.getName().toString();
+        String arrType = fragment.resolveBinding().getType().toString().replace("[]", "");
 
         return Optional.of(URL + "incorrectvariabledeclaration?typename=" + arrType
                 + "&foundname=" + arrName);
@@ -174,13 +160,13 @@ public class MatchingRefURLAssembler {
      * @return the the URL with path and parameters for the corresponding MatchingRef page
      */
     public Optional<String> getArrDimURL(ASTNode problemNode) {
-        ASTNode greatGrandparent = problemNode.getParent().getParent().getParent();
-        if (!(greatGrandparent instanceof VariableDeclarationFragment)) {
+        Optional<VariableDeclarationFragment> fragmentOptional = findDeclarationFragment(problemNode);
+        if (!fragmentOptional.isPresent()) {
             return Optional.empty();
         }
 
         String arrType = problemNode.toString();
-        String arrName = ((VariableDeclarationFragment) greatGrandparent).getName().toString();
+        String arrName = fragmentOptional.get().getName().toString();
 
         return Optional.of(URL + "incorrectdimensionexpression1?typename=" + arrType);
     }
@@ -192,13 +178,13 @@ public class MatchingRefURLAssembler {
      */
     public Optional<String> getTwoDimArrURL(ASTNode problemNode) {
         ASTNode parent = problemNode.getParent();
-        ASTNode grandparent = parent.getParent();
-        if (!(parent instanceof ArrayCreation) || !(grandparent instanceof VariableDeclarationFragment)) {
+        Optional<VariableDeclarationFragment> fragmentOptional = findDeclarationFragment(problemNode);
+        if (!(parent instanceof ArrayCreation) || !fragmentOptional.isPresent()) {
             return Optional.empty();
         }
 
         String arrType = ((ArrayCreation) parent).getType().getElementType().toString();
-        String arrName = ((VariableDeclarationFragment) grandparent).getName().toString();
+        String arrName = fragmentOptional.get().getName().toString();
 
         return Optional.of(URL + "incorrectdimensionexpression2?typename=" + arrType);
     }
@@ -210,13 +196,13 @@ public class MatchingRefURLAssembler {
      */
     public Optional<String> getTwoInitializerArrURL(ASTNode problemNode) {
         ASTNode parent = problemNode.getParent();
-        ASTNode grandparent = parent.getParent();
-        if (!(parent instanceof ArrayCreation) || !(grandparent instanceof VariableDeclarationFragment)) {
+        Optional<VariableDeclarationFragment> fragmentOptional = findDeclarationFragment(problemNode);
+        if (!(parent instanceof ArrayCreation) || !fragmentOptional.isPresent()) {
             return Optional.empty();
         }
 
         String arrType = ((ArrayCreation) parent).getType().getElementType().toString();
-        String arrName = ((VariableDeclarationFragment) grandparent).getName().toString();
+        String arrName = fragmentOptional.get().getName().toString();
 
         return Optional.of(URL + "incorrectdimensionexpression3?typename=" + arrType);
     }
@@ -322,20 +308,14 @@ public class MatchingRefURLAssembler {
      * @return the the URL with path and parameters for the corresponding MatchingRef page
      */
     public Optional<String> getMissingTypeURL(String missingType, ASTNode problemNode) {
-        ASTNode grandparent = problemNode.getParent().getParent();
 
         // All variables in the statement will be the same type, so use the first as an example
-        VariableDeclarationFragment firstVar;
-        if (grandparent instanceof VariableDeclarationStatement) {
-            VariableDeclarationStatement varStatement = (VariableDeclarationStatement) grandparent;
-            firstVar = (VariableDeclarationFragment) varStatement.fragments().get(0);
-        } else if (grandparent.getParent() instanceof VariableDeclarationFragment) {
-            firstVar = (VariableDeclarationFragment) grandparent.getParent();
-        } else {
+        Optional<VariableDeclarationFragment> fragmentOptional = findDeclarationFragment(problemNode);
+        if (!fragmentOptional.isPresent()) {
             return Optional.empty();
         }
 
-        String varName = firstVar.getName().toString();
+        String varName = fragmentOptional.get().getName().toString();
         String dummyCorrectName = "CorrectName";
 
         return Optional.of(URL + "typenotfound?classname=" + missingType
@@ -556,6 +536,34 @@ public class MatchingRefURLAssembler {
         declaredArrays.add(declarationStatement.substring(lastCommaIndex + 1));
 
         return declaredArrays;
+    }
+
+    /**
+     * Finds the closest {@link VariableDeclarationFragment} to the problem node.
+     * @param problemNode       problem node where error occurred
+     * @return the closest declaration fragment to the problem node
+     */
+    private Optional<VariableDeclarationFragment> findDeclarationFragment(ASTNode problemNode) {
+        ASTNode node = problemNode;
+        while (node != null) {
+            if (node instanceof VariableDeclarationFragment) {
+                return Optional.of((VariableDeclarationFragment) node);
+            }
+
+            if (node instanceof FieldDeclaration) {
+                FieldDeclaration fieldDeclaration = (FieldDeclaration) node;
+                return Optional.of((VariableDeclarationFragment) fieldDeclaration.fragments().get(0));
+            }
+
+            if (node instanceof VariableDeclarationStatement) {
+                VariableDeclarationStatement declarationStatement = (VariableDeclarationStatement) node;
+                return Optional.of((VariableDeclarationFragment) declarationStatement.fragments().get(0));
+            }
+
+            node = node.getParent();
+        }
+
+        return Optional.empty();
     }
 
     /**
