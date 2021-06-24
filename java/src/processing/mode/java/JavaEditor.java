@@ -1307,8 +1307,6 @@ public class JavaEditor extends Editor {
     javafx.application.Platform.runLater(() -> {
       if (webView != null && currentProblem != null) {
         webView.getEngine().load(currentProblem.getMatchingRefURL());
-      } else if (webView != null) {
-        webView.getEngine().load("");
       }
     });
 
