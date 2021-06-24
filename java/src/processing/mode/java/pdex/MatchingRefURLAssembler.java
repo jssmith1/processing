@@ -3,12 +3,20 @@ package processing.mode.java.pdex;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ArrayAccess;
 import org.eclipse.jdt.core.dom.ArrayCreation;
+import org.eclipse.jdt.core.dom.ArrayInitializer;
+import org.eclipse.jdt.core.dom.Assignment;
+import org.eclipse.jdt.core.dom.CastExpression;
+import org.eclipse.jdt.core.dom.ConditionalExpression;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.InfixExpression;
+import org.eclipse.jdt.core.dom.InstanceofExpression;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.PostfixExpression;
+import org.eclipse.jdt.core.dom.PrefixExpression;
 import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
@@ -17,9 +25,12 @@ import processing.app.syntax.JEditTextArea;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -109,7 +120,6 @@ public class MatchingRefURLAssembler {
      */
     public Optional<String> getIncorrectVarDeclarationURL(ASTNode problemNode) {
         Optional<VariableDeclarationFragment> fragmentOptional = findDeclarationFragment(problemNode);
-        System.out.println(fragmentOptional.isPresent());
         if (!fragmentOptional.isPresent()) {
             return Optional.empty();
         }
@@ -117,7 +127,7 @@ public class MatchingRefURLAssembler {
         VariableDeclarationFragment fragment = fragmentOptional.get();
 
         String arrName = fragment.getName().toString();
-        String arrType = fragment.resolveBinding().getType().toString().replace("[]", "");
+        String arrType = fragment.resolveBinding().getType().getElementType().toString();
 
         return Optional.of(URL + "incorrectvariabledeclaration?typename=" + arrType
                 + "&foundname=" + arrName);
@@ -330,40 +340,8 @@ public class MatchingRefURLAssembler {
      * @return the the URL with path and parameters for the corresponding MatchingRef page
      */
     public Optional<String> getMissingVarURL(String varName, ASTNode problemNode) {
-        String params = "?";
-        ASTNode parent = problemNode.getParent();
-        ASTNode grandparent = parent.getParent();
-
-        System.out.println(varName);
-        System.out.println(problemNode.getClass());
-        System.out.println(parent.getClass());
-        System.out.println(grandparent.getClass());
-
-        if (parent instanceof MethodInvocation) {
-            MethodInvocation invocation = (MethodInvocation) parent;
-            List<String> requiredParamTypes = Arrays.stream(
-                    invocation.resolveMethodBinding().getParameterTypes()
-            ).map(ITypeBinding::getName).collect(Collectors.toList());
-            List<String> providedParams = ((List<?>) invocation.arguments()).stream()
-                    .map(Object::toString).collect(Collectors.toList());
-
-            String varType = requiredParamTypes.get(providedParams.indexOf(varName));
-            params += "classname=" + varType + "&varname=" + varName;
-
-        } else if (parent instanceof ArrayAccess && grandparent instanceof VariableDeclarationFragment) {
-            ArrayAccess arrAccess = (ArrayAccess) parent;
-            String length = arrAccess.getIndex().toString();
-
-            // The "varName" is actually the declared type when an array is being created
-            VariableDeclarationFragment declaration = (VariableDeclarationFragment) grandparent;
-            String arrName = declaration.getName().toString();
-
-            params += "classname=" + varName + "&varname=" + arrName;
-        } else {
-            return Optional.empty();
-        }
-
-        return Optional.of(URL + "variablenotfound" + params);
+        String varType = getClosestExpressionType(varName, problemNode);
+        return Optional.of(URL + "variablenotfound?classname=" + varType + "&varname=" + varName);
     }
 
     /**
@@ -564,6 +542,225 @@ public class MatchingRefURLAssembler {
         }
 
         return Optional.empty();
+    }
+
+    /**
+     * Gets the expression closest to the error.
+     * @param missingVar        the name of the missing variable
+     * @param problemNode       the node where the error occurred
+     * @return the type of the variable missing; defaults to "Object"
+     */
+    private String getClosestExpressionType(String missingVar, ASTNode problemNode) {
+        Class<?>[] supportedExpressions = {
+                PrefixExpression.class, InfixExpression.class, PostfixExpression.class,
+                ConditionalExpression.class, InstanceofExpression.class, VariableDeclarationFragment.class,
+                ArrayCreation.class, ArrayAccess.class, ArrayInitializer.class,
+                CastExpression.class, MethodInvocation.class, Assignment.class
+        };
+
+        Map<Class<?>, BiFunction<String, ASTNode, String>> typeGetters = new HashMap<>();
+        typeGetters.put(PrefixExpression.class, this::getTypeFromPrefixExpression);
+        typeGetters.put(InfixExpression.class, this::getTypeFromInfixExpression);
+        typeGetters.put(PostfixExpression.class, this::getTypeFromPostfixExpression);
+        typeGetters.put(ConditionalExpression.class, this::getTypeFromConditionalExpression);
+        typeGetters.put(InstanceofExpression.class, this::getTypeFromInstanceOf);
+        typeGetters.put(VariableDeclarationFragment.class, this::getTypeFromVarDeclaration);
+        typeGetters.put(ArrayCreation.class, this::getTypeFromArrayCreation);
+        typeGetters.put(ArrayAccess.class, this::getTypeFromArrayAccess);
+        typeGetters.put(ArrayInitializer.class, this::getTypeFromArrayInitializer);
+        typeGetters.put(CastExpression.class, this::getTypeFromCastExpression);
+        typeGetters.put(MethodInvocation.class, this::getTypeFromMethodInvocation);
+        typeGetters.put(Assignment.class, this::getTypeFromAssignment);
+
+        ASTNode node = problemNode;
+        while (node.getParent() != null) {
+            node = node.getParent();
+
+            for (Class<?> expressionType : supportedExpressions) {
+                if (expressionType.isInstance(node)) {
+                    return typeGetters.get(expressionType).apply(missingVar, node);
+                }
+            }
+        }
+
+        return "Object";
+    }
+
+    /**
+     * Gets the type of a missing variable from a prefix expression.
+     * @param varName           name of the missing variable
+     * @param prefixExpression  expression closest to error
+     * @return the type of the missing variable
+     */
+    private String getTypeFromPrefixExpression(String varName, ASTNode prefixExpression) {
+        PrefixExpression prefix = (PrefixExpression) prefixExpression;
+
+        PrefixExpression.Operator[] booleanOperators = {PrefixExpression.Operator.NOT};
+
+        if (Arrays.asList(booleanOperators).contains(prefix.getOperator())) {
+            return "boolean";
+        } else {
+
+            /* Some of the other operators can also apply to floating point values,
+               but they all apply to integers. It's safer to assume the value is an integer. */
+            return "int";
+
+        }
+    }
+
+    /**
+     * Gets the type of a missing variable from an infix expression.
+     * @param varName           name of the missing variable
+     * @param infixExpression   expression closest to error
+     * @return the type of the missing variable
+     */
+    private String getTypeFromInfixExpression(String varName, ASTNode infixExpression) {
+        InfixExpression infix = (InfixExpression) infixExpression;
+
+        // Guess the type based on the other operand
+        if (infix.getLeftOperand() != null && infix.getLeftOperand().resolveTypeBinding() != null) {
+            return infix.getLeftOperand().resolveTypeBinding().getName();
+        } else if (infix.getRightOperand() != null && infix.getRightOperand().resolveTypeBinding() != null) {
+            return infix.getRightOperand().resolveTypeBinding().getName();
+        }
+
+        InfixExpression.Operator[] booleanOperators = {
+                InfixExpression.Operator.CONDITIONAL_OR, InfixExpression.Operator.CONDITIONAL_AND
+        };
+        InfixExpression.Operator[] numericalOperators = {
+                InfixExpression.Operator.TIMES, InfixExpression.Operator.DIVIDE, InfixExpression.Operator.REMAINDER,
+                InfixExpression.Operator.PLUS, InfixExpression.Operator.MINUS,
+                InfixExpression.Operator.LEFT_SHIFT,
+                InfixExpression.Operator.RIGHT_SHIFT_SIGNED, InfixExpression.Operator.RIGHT_SHIFT_UNSIGNED,
+                InfixExpression.Operator.LESS, InfixExpression.Operator.GREATER,
+                InfixExpression.Operator.LESS_EQUALS, InfixExpression.Operator.GREATER_EQUALS,
+                InfixExpression.Operator.XOR, InfixExpression.Operator.OR, InfixExpression.Operator.AND
+        };
+
+        // Guess the type based on the operator
+        if (Arrays.asList(booleanOperators).contains(infix.getOperator())) {
+            return "boolean";
+        } else if (Arrays.asList(numericalOperators).contains(infix.getOperator())) {
+            return "int";
+        }
+
+        // Assume it's a boolean if we can't find out any info about the type
+        return "boolean";
+
+    }
+
+    /**
+     * Gets the type of a missing variable from a postfix expression.
+     * @param varName             name of the missing variable
+     * @param postfixExpression   expression closest to error
+     * @return the type of the missing variable
+     */
+    private String getTypeFromPostfixExpression(String varName, ASTNode postfixExpression) {
+
+        // The only two postfix operators are increment and decrement
+        return "int";
+
+    }
+
+    /**
+     * Gets the type of a missing variable from a conditional expression.
+     * @param varName                   name of the missing variable
+     * @param conditionalExpression     expression closest to error
+     * @return the type of the missing variable
+     */
+    private String getTypeFromConditionalExpression(String varName, ASTNode conditionalExpression) {
+        return "boolean";
+    }
+
+    /**
+     * Gets the type of a missing variable from an instanceOf expression.
+     * @param varName           name of the missing variable
+     * @param instanceOf        expression closest to error
+     * @return the type of the missing variable
+     */
+    private String getTypeFromInstanceOf(String varName, ASTNode instanceOf) {
+        return "Object";
+    }
+
+    /**
+     * Gets the type of a missing variable from a variable declaration expression.
+     * @param varName           name of the missing variable
+     * @param varDeclaration    expression closest to error
+     * @return the type of the missing variable
+     */
+    private String getTypeFromVarDeclaration(String varName, ASTNode varDeclaration) {
+        VariableDeclarationFragment declaration = (VariableDeclarationFragment) varDeclaration;
+        return declaration.resolveBinding().getType().getName();
+    }
+
+    /**
+     * Gets the type of a missing variable from a method invocation expression.
+     * @param varName           name of the missing variable
+     * @param methodInvocation  expression closest to error
+     * @return the type of the missing variable
+     */
+    private String getTypeFromMethodInvocation(String varName, ASTNode methodInvocation) {
+        MethodInvocation invocation = (MethodInvocation) methodInvocation;
+        List<String> requiredParamTypes = Arrays.stream(
+                invocation.resolveMethodBinding().getParameterTypes()
+        ).map(ITypeBinding::getName).collect(Collectors.toList());
+        List<String> providedParams = ((List<?>) invocation.arguments()).stream()
+                .map(Object::toString).collect(Collectors.toList());
+
+        return requiredParamTypes.get(providedParams.indexOf(varName));
+    }
+
+    /**
+     * Gets the type of a missing variable from an array creation expression.
+     * @param varName           name of the missing variable
+     * @param arrayCreation     expression closest to error
+     * @return the type of the missing variable
+     */
+    private String getTypeFromArrayCreation(String varName, ASTNode arrayCreation) {
+        return "int";
+    }
+
+    /**
+     * Gets the type of a missing variable from an array access expression.
+     * @param varName           name of the missing variable
+     * @param arrayAccess       expression closest to error
+     * @return the type of the missing variable
+     */
+    private String getTypeFromArrayAccess(String varName, ASTNode arrayAccess) {
+        return "int";
+    }
+
+    /**
+     * Gets the type of a missing variable from an array initializer expression.
+     * @param varName               name of the missing variable
+     * @param arrayInitializer      expression closest to error
+     * @return the type of the missing variable
+     */
+    private String getTypeFromArrayInitializer(String varName, ASTNode arrayInitializer) {
+        ArrayInitializer initializer = (ArrayInitializer) arrayInitializer;
+        return initializer.resolveTypeBinding().getElementType().getName();
+    }
+
+    /**
+     * Gets the type of a missing variable from a cast expression.
+     * @param varName           name of the missing variable
+     * @param castExpression    expression closest to error
+     * @return the type of the missing variable
+     */
+    private String getTypeFromCastExpression(String varName, ASTNode castExpression) {
+        CastExpression cast = (CastExpression) castExpression;
+        return cast.getType().toString();
+    }
+
+    /**
+     * Gets the type of a missing variable from an assignment expression.
+     * @param varName                   name of the missing variable
+     * @param assignmentExpression      expression closest to error
+     * @return the type of the missing variable
+     */
+    private String getTypeFromAssignment(String varName, ASTNode assignmentExpression) {
+        Assignment assignment = (Assignment) assignmentExpression;
+        return assignment.resolveTypeBinding().getName();
     }
 
     /**
