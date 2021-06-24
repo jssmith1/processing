@@ -1321,7 +1321,7 @@ public class JavaEditor extends Editor {
     }
 
     // Get the MatchingRef URL
-    MatchingRefURLAssembler urlAssembler = new MatchingRefURLAssembler();
+    MatchingRefURLAssembler urlAssembler = new MatchingRefURLAssembler(true);
     SketchException sketchErr = (SketchException) err;
     String message = err.getMessage();
     Optional<String> optionalURL = Optional.empty();

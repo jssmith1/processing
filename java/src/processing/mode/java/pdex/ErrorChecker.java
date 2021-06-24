@@ -185,7 +185,7 @@ class ErrorChecker {
             compilerError.getSourceEnd()
     );
 
-    MatchingRefURLAssembler urlAssembler = new MatchingRefURLAssembler();
+    MatchingRefURLAssembler urlAssembler = new MatchingRefURLAssembler(true);
 
     switch (compilerError.getID()) {
       case IProblem.MustDefineEitherDimensionExpressionsOrInitializer:

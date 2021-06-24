@@ -41,6 +41,19 @@ import java.util.stream.IntStream;
 @SuppressWarnings({"SimplifyOptionalCallChains", "PatternVariableCanBeUsed"})
 public class MatchingRefURLAssembler {
     private static final String URL = "http://139.147.9.247/";
+    private final String GLOBAL_PARAMS;
+
+    /**
+     * Creates a new URL assembler for MatchingRef.
+     * @param embedded      whether the pages will be embedded
+     */
+    public MatchingRefURLAssembler(boolean embedded) {
+        if (embedded) {
+            GLOBAL_PARAMS = "&embed=true";
+        } else {
+            GLOBAL_PARAMS = "";
+        }
+    }
 
     /**
      * Gets the MatchingRef URL for an extra right curly brace.
@@ -60,7 +73,7 @@ public class MatchingRefURLAssembler {
                 + "\n  ...\n" + textAboveError.substring(rightBraceIndex, endIndex + 1);
         String correctedSnippet = mismatchedSnippet.substring(0, mismatchedSnippet.length() - 1);
 
-        return Optional.of(URL + "extraneousclosingcurlybrace?classname=Thing&methodname=doSomething");
+        return Optional.of(URL + "extraneousclosingcurlybrace?classname=Thing&methodname=doSomething" + GLOBAL_PARAMS);
     }
 
     /**
@@ -110,7 +123,7 @@ public class MatchingRefURLAssembler {
         }
 
         return Optional.of(URL + "incorrectvariabledeclaration?typename=" + arrType
-                + "&foundname=" + arrName);
+                + "&foundname=" + arrName + GLOBAL_PARAMS);
     }
 
     /**
@@ -130,7 +143,7 @@ public class MatchingRefURLAssembler {
         String arrType = fragment.resolveBinding().getType().getElementType().toString();
 
         return Optional.of(URL + "incorrectvariabledeclaration?typename=" + arrType
-                + "&foundname=" + arrName);
+                + "&foundname=" + arrName + GLOBAL_PARAMS);
     }
 
     /**
@@ -161,7 +174,7 @@ public class MatchingRefURLAssembler {
 
         }
 
-        return Optional.of(URL + "incorrectmethoddeclaration?setupmethodname=size&drawmethodname=rect");
+        return Optional.of(URL + "incorrectmethoddeclaration?setupmethodname=size&drawmethodname=rect" + GLOBAL_PARAMS);
     }
 
     /**
@@ -178,7 +191,7 @@ public class MatchingRefURLAssembler {
         String arrType = problemNode.toString();
         String arrName = fragmentOptional.get().getName().toString();
 
-        return Optional.of(URL + "incorrectdimensionexpression1?typename=" + arrType);
+        return Optional.of(URL + "incorrectdimensionexpression1?typename=" + arrType + GLOBAL_PARAMS);
     }
 
     /**
@@ -196,7 +209,7 @@ public class MatchingRefURLAssembler {
         String arrType = ((ArrayCreation) parent).getType().getElementType().toString();
         String arrName = fragmentOptional.get().getName().toString();
 
-        return Optional.of(URL + "incorrectdimensionexpression2?typename=" + arrType);
+        return Optional.of(URL + "incorrectdimensionexpression2?typename=" + arrType + GLOBAL_PARAMS);
     }
 
     /**
@@ -214,7 +227,7 @@ public class MatchingRefURLAssembler {
         String arrType = ((ArrayCreation) parent).getType().getElementType().toString();
         String arrName = fragmentOptional.get().getName().toString();
 
-        return Optional.of(URL + "incorrectdimensionexpression3?typename=" + arrType);
+        return Optional.of(URL + "incorrectdimensionexpression3?typename=" + arrType + GLOBAL_PARAMS);
     }
 
     /**
@@ -243,7 +256,8 @@ public class MatchingRefURLAssembler {
 
         return Optional.of(URL + "methodnotfound?methodname=" + methodName
                 + "&correctmethodname=" + dummyCorrectName
-                + "&typename=" + dummyReturnType);
+                + "&typename=" + dummyReturnType
+                + GLOBAL_PARAMS);
     }
 
     /**
@@ -272,7 +286,8 @@ public class MatchingRefURLAssembler {
 
         return Optional.of(URL + "parametermismatch?methodname=" + methodName
                 + "&methodtypename=" + methodReturnType
-                + "&typeonename=int&typetwoname=String");
+                + "&typeonename=int&typetwoname=String"
+                + GLOBAL_PARAMS);
     }
 
     /**
@@ -294,7 +309,8 @@ public class MatchingRefURLAssembler {
         String methodReturnType = declaration.getReturnType2().toString();
 
         return Optional.of(URL + "returnmissing?methodname=" + methodName
-                + "&typename=" + methodReturnType);
+                + "&typename=" + methodReturnType
+                + GLOBAL_PARAMS);
     }
 
     /**
@@ -308,7 +324,8 @@ public class MatchingRefURLAssembler {
         String varName = problemNode.toString();
         return Optional.of(URL + "typemismatch?typeonename=" + providedType
                 + "&typetwoname=" + requiredType
-                + "&varname=" + varName);
+                + "&varname=" + varName
+                + GLOBAL_PARAMS);
     }
 
     /**
@@ -330,7 +347,8 @@ public class MatchingRefURLAssembler {
 
         return Optional.of(URL + "typenotfound?classname=" + missingType
                 + "&correctclassname=" + dummyCorrectName
-                + "&varname=" + varName);
+                + "&varname=" + varName
+                + GLOBAL_PARAMS);
     }
 
     /**
@@ -341,7 +359,7 @@ public class MatchingRefURLAssembler {
      */
     public Optional<String> getMissingVarURL(String varName, ASTNode problemNode) {
         String varType = getClosestExpressionType(varName, problemNode);
-        return Optional.of(URL + "variablenotfound?classname=" + varType + "&varname=" + varName);
+        return Optional.of(URL + "variablenotfound?classname=" + varType + "&varname=" + varName + GLOBAL_PARAMS);
     }
 
     /**
@@ -366,7 +384,7 @@ public class MatchingRefURLAssembler {
         String type = expressionNode.resolveTypeBinding().getName();
         params += "&typename=" + type;
 
-        return Optional.of(URL + "variablenotinit" + params);
+        return Optional.of(URL + "variablenotinit" + params + GLOBAL_PARAMS);
     }
 
     /**
@@ -379,7 +397,7 @@ public class MatchingRefURLAssembler {
             return Optional.empty();
         }
 
-        return Optional.of(URL + "unexpectedtoken?typename=" + typeName);
+        return Optional.of(URL + "unexpectedtoken?typename=" + typeName + GLOBAL_PARAMS);
     }
 
     /**
@@ -401,7 +419,7 @@ public class MatchingRefURLAssembler {
         String staticMethod = ((MethodDeclaration) node).getName().toString();
         params += "&staticmethodname=" + staticMethod;
 
-        return Optional.of(URL + "nonstaticfromstatic" + params);
+        return Optional.of(URL + "nonstaticfromstatic" + params + GLOBAL_PARAMS);
     }
 
     /**
@@ -419,7 +437,7 @@ public class MatchingRefURLAssembler {
 
         String params = "?methodonename=" + methodName;
 
-        return Optional.of(URL + "syntaxerrorvariabledeclarators" + params);
+        return Optional.of(URL + "syntaxerrorvariabledeclarators" + params + GLOBAL_PARAMS);
     }
 
     /**
@@ -431,7 +449,9 @@ public class MatchingRefURLAssembler {
      */
     public Optional<String> getMethodCallWrongTypeURL(String type, String methodName, ASTNode problemNode) {
         String variableName = problemNode.toString();
-        return Optional.of(URL + "methodcallonwrongtype?methodname=" + methodName + "&typetwoname=" + type);
+        return Optional.of(URL + "methodcallonwrongtype?methodname=" + methodName
+                + "&typetwoname=" + type
+                + GLOBAL_PARAMS);
     }
 
     /**
