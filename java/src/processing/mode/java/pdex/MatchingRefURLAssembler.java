@@ -23,6 +23,8 @@ import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import processing.app.SketchException;
 import processing.app.syntax.JEditTextArea;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -67,12 +69,23 @@ public class MatchingRefURLAssembler {
         int rightBraceIndex = textAboveError.lastIndexOf('}', endIndex - 1);
         int leftBraceIndex = findMatchingBrace(textAboveError, rightBraceIndex);
 
-        int startIndex = textAboveError.lastIndexOf('}', leftBraceIndex) + 1;
-        String mismatchedSnippet = textAboveError.substring(startIndex, leftBraceIndex + 1)
+        int startIndex = textAboveError.lastIndexOf('\n', leftBraceIndex);
+        if (startIndex > 0) {
+            startIndex = textAboveError.lastIndexOf('\n', startIndex - 1);
+        }
+        String mismatchedSnippet = textAboveError.substring(startIndex + 1, leftBraceIndex + 1)
                 + "\n  ...\n" + textAboveError.substring(rightBraceIndex, endIndex + 1);
         String correctedSnippet = mismatchedSnippet.substring(0, mismatchedSnippet.length() - 1);
 
-        return Optional.of(URL + "extraneousclosingcurlybrace?classname=Thing&methodname=doSomething" + GLOBAL_PARAMS);
+        try {
+            mismatchedSnippet = URLEncoder.encode(mismatchedSnippet, "UTF-8");
+            correctedSnippet = URLEncoder.encode(correctedSnippet, "UTF-8");
+        } catch (UnsupportedEncodingException err) {
+            return Optional.empty();
+        }
+
+        return Optional.of(URL + "extraneousclosingcurlybrace?original=" + mismatchedSnippet
+                + "&fixed=" + correctedSnippet + GLOBAL_PARAMS);
     }
 
     /**
