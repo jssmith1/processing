@@ -165,6 +165,7 @@ public class MatchingRefURLAssembler {
      * @return the the URL with path and parameters for the corresponding MatchingRef page
      */
     public Optional<String> getIncorrectMethodDeclarationURL(String textAboveError) {
+        System.out.println(textAboveError);
         int lastOpenParenthesisIndex = textAboveError.lastIndexOf('(');
 
         int currentCharIndex = lastOpenParenthesisIndex;
@@ -180,13 +181,7 @@ public class MatchingRefURLAssembler {
 
         String methodName = textAboveError.substring(currentCharIndex, lastOpenParenthesisIndex);
 
-        if (methodName.equals("draw") || methodName.equals("setup")) {
-
-        } else {
-
-        }
-
-        return Optional.of(URL + "incorrectmethoddeclaration?setupmethodname=size&drawmethodname=rect" + GLOBAL_PARAMS);
+        return Optional.of(URL + "incorrectmethoddeclaration?methodname=" + methodName + GLOBAL_PARAMS);
     }
 
     /**
@@ -481,17 +476,17 @@ public class MatchingRefURLAssembler {
         Runnable moveToNextIndex;
 
         // Count the initial brace
-        if (startChar == '{') {
+        if (startChar == '{' || startChar == '(') {
             neededLeftBraces--;
             findRightBrace = true;
             moveToNextIndex = previousIndex::getAndIncrement;
-        } else if (startChar == '}') {
+        } else if (startChar == '}' || startChar == ')') {
             neededLeftBraces++;
             findRightBrace = false;
             moveToNextIndex = previousIndex::getAndDecrement;
         } else {
             throw new IllegalArgumentException("Character at index "
-                    + startIndex + " is not a brace.");
+                    + startIndex + " is not a brace or parenthesis.");
         }
 
         // Find the matching brace
@@ -499,16 +494,16 @@ public class MatchingRefURLAssembler {
             moveToNextIndex.run();
 
             char nextChar = code.charAt(previousIndex.get());
-            if (nextChar == '{') {
+            if (nextChar == '{' || nextChar == '(') {
                 neededLeftBraces--;
-            } else if (nextChar == '}') {
+            } else if (nextChar == '}' || nextChar == ')') {
                 neededLeftBraces++;
             }
         }
 
         char lastCharacter = code.charAt(previousIndex.get());
-        boolean isMatchingRight = findRightBrace && lastCharacter == '}';
-        boolean isMatchingLeft = !findRightBrace && lastCharacter == '{';
+        boolean isMatchingRight = findRightBrace && (lastCharacter == '}' || lastCharacter == ')');
+        boolean isMatchingLeft = !findRightBrace && (lastCharacter == '{' || lastCharacter == '(');
         if (!isMatchingLeft && !isMatchingRight) {
             return -1;
         }
