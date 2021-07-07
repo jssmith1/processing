@@ -197,7 +197,9 @@ public class MatchingRefURLAssembler {
         String arrType = problemNode.toString();
         String arrName = fragmentOptional.get().getName().toString();
 
-        return Optional.of(URL + "incorrectdimensionexpression1?typename=" + arrType + GLOBAL_PARAMS);
+        return Optional.of(URL + "incorrectdimensionexpression1?typename=" + arrType
+                + "&arrname=" + arrName
+                + GLOBAL_PARAMS);
     }
 
     /**
@@ -215,7 +217,9 @@ public class MatchingRefURLAssembler {
         String arrType = ((ArrayCreation) parent).getType().getElementType().toString();
         String arrName = fragmentOptional.get().getName().toString();
 
-        return Optional.of(URL + "incorrectdimensionexpression2?typename=" + arrType + GLOBAL_PARAMS);
+        return Optional.of(URL + "incorrectdimensionexpression2?typename=" + arrType
+                + "&arrname=" + arrName
+                + GLOBAL_PARAMS);
     }
 
     /**
@@ -233,7 +237,9 @@ public class MatchingRefURLAssembler {
         String arrType = ((ArrayCreation) parent).getType().getElementType().toString();
         String arrName = fragmentOptional.get().getName().toString();
 
-        return Optional.of(URL + "incorrectdimensionexpression3?typename=" + arrType + GLOBAL_PARAMS);
+        return Optional.of(URL + "incorrectdimensionexpression3?typename=" + arrType
+                + "&arrname=" + arrName
+                + GLOBAL_PARAMS);
     }
 
     /**
