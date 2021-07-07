@@ -40,7 +40,6 @@ import java.util.stream.IntStream;
  * Creates URLs for MatchingRef errors based on the AST.
  * @author soir20
  */
-@SuppressWarnings("SimplifyOptionalCallChains")
 public class MatchingRefURLAssembler {
     private static final String URL = "http://139.147.9.247/";
     private final String GLOBAL_PARAMS;
