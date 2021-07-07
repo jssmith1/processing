@@ -165,7 +165,6 @@ public class MatchingRefURLAssembler {
      * @return the the URL with path and parameters for the corresponding MatchingRef page
      */
     public Optional<String> getIncorrectMethodDeclarationURL(String textAboveError) {
-        System.out.println(textAboveError);
         int lastOpenParenthesisIndex = textAboveError.lastIndexOf('(');
 
         int currentCharIndex = lastOpenParenthesisIndex;
