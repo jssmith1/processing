@@ -462,7 +462,8 @@ public class MatchingRefURLAssembler {
     public Optional<String> getMethodCallWrongTypeURL(String type, String methodName, ASTNode problemNode) {
         String variableName = problemNode.toString();
         return Optional.of(URL + "methodcallonwrongtype?methodname=" + methodName
-                + "&typetwoname=" + type
+                + "&typename=" + type
+                + "&varname" + variableName
                 + GLOBAL_PARAMS);
     }
 
