@@ -261,14 +261,23 @@ public class MatchingRefURLAssembler {
         ).collect(Collectors.toList());
         String methodName = invocation.getName().toString();
 
-        /* We don't know the desired return type, so use a
-           familiar one like "int" instead of one like "void." */
-        String dummyReturnType = "int";
+        String returnType = getClosestExpressionType(invocation);
         String dummyCorrectName = "correctName";
+
+        String encodedParams;
+        String encodedTypes;
+        try {
+            encodedParams = URLEncoder.encode(String.join(",", providedParams), "UTF-8");
+            encodedTypes = URLEncoder.encode(String.join(",", providedParamTypes), "UTF-8");
+        } catch (UnsupportedEncodingException err) {
+            return Optional.empty();
+        }
 
         return Optional.of(URL + "methodnotfound?methodname=" + methodName
                 + "&correctmethodname=" + dummyCorrectName
-                + "&typename=" + dummyReturnType
+                + "&typename=" + returnType
+                + "&providedparams=" + encodedParams
+                + "&providedtypes=" + encodedTypes
                 + GLOBAL_PARAMS);
     }
 
@@ -579,6 +588,18 @@ public class MatchingRefURLAssembler {
 
     /**
      * Gets the expression closest to the error.
+     * @param problemNode       the node where the error occurred
+     * @return the type of the variable missing; defaults to "Object"
+     */
+    private String getClosestExpressionType(ASTNode problemNode) {
+
+        // The empty string will simply be ignored by methods that use it
+        return getClosestExpressionType("", problemNode);
+
+    }
+
+    /**
+     * Gets the expression closest to the error.
      * @param missingVar        the name of the missing variable
      * @param problemNode       the node where the error occurred
      * @return the type of the variable missing; defaults to "Object"
@@ -740,7 +761,9 @@ public class MatchingRefURLAssembler {
         List<String> providedParams = ((List<?>) invocation.arguments()).stream()
                 .map(Object::toString).collect(Collectors.toList());
 
-        return requiredParamTypes.get(providedParams.indexOf(varName));
+        int paramIndex = providedParams.indexOf(varName);
+
+        return paramIndex >= 0 ? requiredParamTypes.get(paramIndex) : "Object";
     }
 
     /**
