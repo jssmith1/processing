@@ -318,9 +318,9 @@ public class MatchingRefURLAssembler {
 
         return Optional.of(URL + "parametermismatch?methodname=" + methodName
                 + "&methodtypename=" + methodReturnType
-                + "&providedParams=" + encodedParams
-                + "&providedTypes=" + encodedProvidedTypes
-                + "&requiredTypes=" + encodedRequiredTypes
+                + "&providedparams=" + encodedParams
+                + "&providedtypes=" + encodedProvidedTypes
+                + "&requiredtypes=" + encodedRequiredTypes
                 + GLOBAL_PARAMS);
     }
 
