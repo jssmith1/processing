@@ -439,6 +439,7 @@ public class MatchingRefURLAssembler {
 
         String staticMethod = ((MethodDeclaration) node).getName().toString();
         params += "&staticmethodname=" + staticMethod;
+        params += "&filename=" + fileName;
 
         return Optional.of(URL + "nonstaticfromstatic" + params + GLOBAL_PARAMS);
     }
