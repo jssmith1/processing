@@ -329,8 +329,16 @@ public class MatchingRefURLAssembler {
         String methodName = declaration.getName().toString();
         String methodReturnType = declaration.getReturnType2().toString();
 
+        String encodedTypes;
+        try {
+            encodedTypes = URLEncoder.encode(String.join(",", requiredParamTypes), "UTF-8");
+        } catch (UnsupportedEncodingException err) {
+            return Optional.empty();
+        }
+
         return Optional.of(URL + "returnmissing?methodname=" + methodName
                 + "&typename=" + methodReturnType
+                + "&requiredtypes=" + encodedTypes
                 + GLOBAL_PARAMS);
     }
 
