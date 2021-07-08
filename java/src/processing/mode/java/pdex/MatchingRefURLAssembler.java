@@ -305,9 +305,22 @@ public class MatchingRefURLAssembler {
         String methodName = invocation.getName().toString();
         String methodReturnType = invocation.resolveMethodBinding().getReturnType().toString();
 
+        String encodedParams;
+        String encodedProvidedTypes;
+        String encodedRequiredTypes;
+        try {
+            encodedParams = URLEncoder.encode(String.join(",", providedParams), "UTF-8");
+            encodedProvidedTypes = URLEncoder.encode(String.join(",", providedParamTypes), "UTF-8");
+            encodedRequiredTypes = URLEncoder.encode(String.join(",", requiredParamTypes), "UTF-8");
+        } catch (UnsupportedEncodingException err) {
+            return Optional.empty();
+        }
+
         return Optional.of(URL + "parametermismatch?methodname=" + methodName
                 + "&methodtypename=" + methodReturnType
-                + "&typeonename=int&typetwoname=String"
+                + "&providedParams=" + encodedParams
+                + "&providedTypes=" + encodedProvidedTypes
+                + "&requiredTypes=" + encodedRequiredTypes
                 + GLOBAL_PARAMS);
     }
 
