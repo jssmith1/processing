@@ -74,7 +74,7 @@ public class MatchingRefURLAssembler {
             startIndex = textAboveError.lastIndexOf('\n', startIndex - 1);
         }
         String mismatchedSnippet = textAboveError.substring(startIndex + 1, leftBraceIndex + 1)
-                + "\n  ...\n" + textAboveError.substring(rightBraceIndex, endIndex + 1);
+                + "\n  /* your code */\n" + textAboveError.substring(rightBraceIndex, endIndex + 1);
         String correctedSnippet = mismatchedSnippet.substring(0, mismatchedSnippet.length() - 1);
 
         try {
