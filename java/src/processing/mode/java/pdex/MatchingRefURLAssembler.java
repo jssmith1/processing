@@ -293,8 +293,6 @@ public class MatchingRefURLAssembler {
         }
 
         MethodInvocation invocation = (MethodInvocation) parent;
-        List<String> providedParams = ((List<?>) invocation.arguments()).stream()
-                .map(Object::toString).collect(Collectors.toList());
         List<String> providedParamTypes = ((List<?>) invocation.arguments()).stream().map(
                 (param) -> ((Expression) param).resolveTypeBinding().getName()
         ).collect(Collectors.toList());
@@ -305,11 +303,9 @@ public class MatchingRefURLAssembler {
         String methodName = invocation.getName().toString();
         String methodReturnType = invocation.resolveMethodBinding().getReturnType().toString();
 
-        String encodedParams;
         String encodedProvidedTypes;
         String encodedRequiredTypes;
         try {
-            encodedParams = URLEncoder.encode(String.join(",", providedParams), "UTF-8");
             encodedProvidedTypes = URLEncoder.encode(String.join(",", providedParamTypes), "UTF-8");
             encodedRequiredTypes = URLEncoder.encode(String.join(",", requiredParamTypes), "UTF-8");
         } catch (UnsupportedEncodingException err) {
@@ -318,7 +314,6 @@ public class MatchingRefURLAssembler {
 
         return Optional.of(URL + "parametermismatch?methodname=" + methodName
                 + "&methodtypename=" + methodReturnType
-                + "&providedparams=" + encodedParams
                 + "&providedtypes=" + encodedProvidedTypes
                 + "&requiredtypes=" + encodedRequiredTypes
                 + GLOBAL_PARAMS);
